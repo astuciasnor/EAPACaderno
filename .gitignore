@@ -1,0 +1,24 @@
+# Coisas do R/RStudio que não interessam a mais ninguém
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+Rplots.pdf
+
+# Bastidores do Quarto (baixados/gerados a cada render)
+.quarto/
+relatorios/.quarto/
+relatorios/*_files/
+
+# Saídas do relatório: o .qmd é a fonte; um Render as refaz
+relatorios/relatorio.docx
+relatorios/relatorio.html
+relatorios/relatorio.pdf
+
+# Dados gerados pelo chunk `tratar` (a planilha bruta é a fonte)
+dados/processados/
+
+# Arquivos temporários do Office e do sistema
+~$*
+.DS_Store
+Thumbs.db
