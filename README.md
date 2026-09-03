@@ -108,17 +108,28 @@ nem de nenhum pacote fora do CRAN.
 
 ## Como usar em um projeto novo
 
-1. Copie a pasta inteira e renomeie (a pasta e o `.Rproj`).
-2. Coloque a(s) planilha(s) em `dados/brutos/`.
-3. Adapte o `relatorio.qmd` chunk a chunk, na ordem. Em geral `importar` e
+1. Pegue uma cópia limpa. No GitHub, use **Code → Download ZIP**: o `.zip` já
+   vem só com as pastas e os arquivos, sem o histórico do projeto. Se preferir
+   copiar a pasta de um computador para outro, apague de dentro da cópia as
+   pastas ocultas `.git/` (o histórico deste projeto, que não é o seu) e
+   `.Rproj.user/` (as preferências do RStudio de outra pessoa).
+2. Renomeie a pasta e o `.Rproj` com o nome do seu estudo. O `here()` não
+   depende desses nomes; ele acha a raiz pelo `.Rproj`, qualquer que seja ele.
+3. Coloque a(s) planilha(s) em `dados/brutos/`.
+4. Adapte o `relatorio.qmd` chunk a chunk, na ordem. Em geral `importar` e
    `tratar` mudam bastante, `explora-*` um pouco, e `analisar` é onde a
    análise de fato acontece. O chunk `tratar` é onde você anota o que é cada
    coluna (o `rename()` faz o "de-para" com a planilha) e por que cada valor
    faltante está faltando.
-4. Reescreva o texto. Os números do texto vêm dos objetos (`` `r fmt(...)` ``),
+5. Reescreva o texto. Os números do texto vêm dos objetos (`` `r fmt(...)` ``),
    nunca digitados à mão.
-5. Apague os arquivos de exemplo (`crescimento_tilapia.xlsx` e o conteúdo de
+6. Apague os arquivos de exemplo (`crescimento_tilapia.xlsx` e o conteúdo de
    `dados/processados/`).
+
+O `.gitignore` que vem na pasta pode ficar: ele serve a qualquer projeto novo,
+dizendo ao git o que não versionar (as saídas do Render, os arquivos do
+RStudio, os dados gerados). Só passa a fazer efeito se você criar um
+repositório para o seu estudo, o que é uma boa ideia, mas não é obrigatório.
 
 ## Convenções
 
