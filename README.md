@@ -100,6 +100,18 @@ estão no arquivo:
 Rodar chunk a chunk, aliás, não depende de formato nenhum: é o modo interativo
 do RStudio, e vale para o `.qmd` inteiro, esteja ele mirando Word ou HTML.
 
+**E se eu quiser um script puro?** Peça ao `knitr` que extraia o código dos
+chunks, na ordem, para um `.R`:
+
+```r
+knitr::purl("relatorios/relatorio.qmd", output = "relatorios/relatorio.R")
+```
+
+Cada chunk vira um bloco marcado com o seu nome (`## ----tratar----`), os
+chunks com `eval: false` entram comentados, e o texto fica de fora. O `.R` é
+um subproduto: a fonte continua sendo o `.qmd`, e um novo `purl()` refaz o
+script quando o relatório mudar.
+
 ## Mudar o texto, inserir imagens
 
 O `.qmd` é seu para escrever. O texto entre os chunks é a prosa do relatório:
