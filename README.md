@@ -70,6 +70,57 @@ ordem em que a análise é pensada. O mesmo arquivo gera **dois documentos**:
 E, fora dos dois, o pesquisador vê qualquer passo rodando o chunk no RStudio
 (Ctrl+Shift+Enter), com a saída no console como sempre.
 
+## Por que um arquivo, duas saídas?
+
+Um aluno logo pergunta: por que existe só o `.qmd`, e como um arquivo gera um
+Word e um HTML diferentes? A resposta cabe numa imagem: **é a mesma receita,
+servida de dois jeitos.** O Word é o prato pronto na mesa, para quem vai comer
+(o leitor: resultados e método, no formato de um artigo). O HTML é a cozinha
+aberta, para quem quer ver como se fez (o pesquisador: todo o código, a
+exploração, o diagnóstico). A receita é uma só; muda quem está olhando.
+
+O `.qmd` é a **fonte única**. O Word e o HTML não são dois arquivos que você
+mantém à mão; são duas impressões do mesmo documento, geradas no Render e
+descartáveis. Se você editasse um `.docx` e um `.html` separados, eles logo
+divergiriam, e ninguém saberia qual é o certo. Com um `.qmd` só, essa dúvida
+não existe.
+
+E o Quarto sabe para qual formato está gerando: durante o Render ele carrega um
+formato de cada vez e o documento se adapta sozinho, por três mecanismos que já
+estão no arquivo:
+
+- **`echo`** — global vale `false` (o Word não mostra código), mas o bloco
+  `html` reescreve para `echo: true`. O mesmo chunk aparece dobrado no HTML e
+  some no Word.
+- **`content-visible when-format="html"`** — as seções de Exploração e de
+  Diagnóstico existem só no HTML; no Word o Quarto as remove antes de gerar.
+- **`output: false` / `include: false`** — valem para os dois formatos, porque
+  são trabalho de bastidor em qualquer caso.
+
+Rodar chunk a chunk, aliás, não depende de formato nenhum: é o modo interativo
+do RStudio, e vale para o `.qmd` inteiro, esteja ele mirando Word ou HTML.
+
+## Mudar o texto, inserir imagens
+
+O `.qmd` é seu para escrever. O texto entre os chunks é a prosa do relatório:
+mude a Introdução, a Discussão, o que quiser, do mesmo jeito que escreveria num
+editor. O que estiver em `` `r ... ` `` puxa um número do código (por exemplo
+`` `r fmt(coef_tend, 3)` ``) e se atualiza sozinho no próximo Render; o resto é
+texto comum.
+
+Para inserir uma foto ou um esquema que não vem do código (uma imagem do
+experimento, um mapa da área de coleta), guarde o arquivo em `imagens/` e
+chame-o assim, onde quiser que ele apareça:
+
+```
+![Vista dos tanques-rede no início do experimento.](../imagens/tanques.jpg){#fig-tanques}
+```
+
+O `#fig-tanques` dá um rótulo à figura; no texto, `@fig-tanques` vira "Figura N"
+com o número certo, lado a lado com as figuras feitas em código. O `../` sobe de
+`relatorios/` para a raiz e desce em `imagens/`. Uma foto assim aparece nas duas
+saídas, no Word e no HTML.
+
 As citações usam `[@chave]` no texto e as obras ficam em `referencias.bib`;
 o Quarto monta a lista de referências no fim, no estilo do arquivo `.csl`
 indicado no YAML. Vêm dois estilos prontos: ABNT (o padrão) e APA (`apa.csl`,
