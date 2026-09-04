@@ -159,6 +159,7 @@ fmt <- function(x, dig = 2) {
 #           formatar_p(0.0321)                  ->  "0,032"
 #           formatar_p(0.0321, no_texto = TRUE) ->  "p = 0,032"
 #           formatar_p(0.0004, no_texto = TRUE) ->  "p < 0,001"
+#           formatar_p(NA)                      ->  "-"
 #
 formatar_p <- function(p, digitos = 3, no_texto = FALSE) {
 
@@ -175,6 +176,10 @@ formatar_p <- function(p, digitos = 3, no_texto = FALSE) {
   if (no_texto) {
     texto <- ifelse(muito_pequeno, paste("p", texto), paste("p =", texto))
   }
+
+  # Onde não há p (a linha do resíduo na ANOVA, por exemplo), o format() acima
+  # devolveria o texto "NA". Um traço é mais honesto, e é o mesmo que fmt() faz.
+  texto[is.na(p)] <- "-"
 
   texto
 }

@@ -1,38 +1,63 @@
 ---
 title: "Densidade de estocagem e crescimento da tilápia em tanques-rede"
 subtitle: "Relatório de análise — EAPACaderno"
-author: "Seu nome"
+author:
+  - name: "Evaldo Martins da Silva"
+    affiliation: "Instituto de Estudos Costeiros; Universidade Federal do Pará"
 date: today
 date-format: "D [de] MMMM [de] YYYY"
 lang: pt-BR
+abstract-title: "Resumo"
+abstract: |
+  Avaliou-se o efeito da densidade de estocagem (50, 100, 150 e 200 peixes/m³)
+  sobre o ganho de peso da tilápia-do-nilo em tanques-rede, em delineamento
+  inteiramente casualizado com seis tanques por tratamento, ao longo de oito
+  semanas. O ganho de peso caiu com a densidade; as duas menores não diferiram
+  entre si, e a perda concentrou-se a partir de 150 peixes/m³. Os dados são
+  fictícios e servem para ilustrar o método.
 bibliography: referencias.bib                        # as obras citadas no texto ([@chave])
 csl: abnt.csl                                        # estilo das citações e da lista: ABNT (padrão)
 # csl: apa.csl                                       # ... ou APA: troque a linha acima por esta
+crossref:
+  title-delim: " – "                                 # "Tabela 1 – ..." em vez de "Tabela 1: ...", como na ABNT
 format:
   # 1. O Word: o relatório para o leitor. Só texto, tabelas e figuras.
   docx:
-    reference-doc: custom-reference.docx   # modelo de página do ecossistema EAPA (o mesmo da CatalyseR)
-    toc: true
+    reference-doc: custom-reference.docx   # modelo de página com cara de artigo (o mesmo da CatalyseR)
+    toc: false                              # artigo não tem sumário
     number-sections: true
-    fig-width: 6.3                          # 16 cm, boa para uma coluna de texto
-    fig-height: 3.9                         # 10 cm
+    fig-width: 4.9                          # 12,5 cm: sobra margem dos dois lados, como em artigo
+    fig-height: 3.0                         # 7,6 cm
     fig-dpi: 300
+    fig-align: center
   # 2. O HTML: o caderno do pesquisador. O mesmo documento, com o código
   #    dobrado (clique em "Código" para abrir) e a exploração à mostra.
   html:
+    theme: [cosmo, ocean.scss]              # cores e fontes do ecossistema EAPA (Ocean Gradient)
+    title-block-banner: "#0F3B5F"           # faixa azul-marinho com título, autor e data
+    title-block-banner-color: "white"
     toc: true
+    toc-location: left                      # índice à esquerda; o ocean.scss o sobe para o alto, ao lado do Resumo
+    toc-depth: 2
+    toc-title: "Neste caderno"
     number-sections: true
     embed-resources: true                   # um único arquivo .html, fácil de enviar
     echo: true                              # aqui o código aparece...
     code-fold: true                         # ... dobrado, para não atrapalhar a leitura
     code-summary: "Código"
     code-tools: true                        # menu no topo: mostrar/esconder todo o código
-    fig-width: 7
-    fig-height: 4.3
+    code-copy: true                         # botão de copiar em cada bloco
+    df-print: kable                         # tabelas exploratórias como tabela, não como texto de console
+    fig-width: 5.2                          # figuras menores que no Word: a tela é mais estreita que a página
+    fig-height: 3.2
+    fig-align: center
+    smooth-scroll: true
 execute:
   echo: false                  # no Word, o leitor vê resultados, não código
   warning: false
   message: false
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{=html}
@@ -77,6 +102,11 @@ library(multcompView)  # multcompLetters(): letras a partir do Tukey
 library(flextable)     # tabelas no Word; o visual vem de flextable_ocean()
 
 source(here("R", "funcoes.R"))
+
+# Três casas decimais nas tabelas exploratórias do caderno. Sem isto, o R
+# imprime sete (149.11667), o que polui a leitura. As tabelas do relatório
+# não dependem disto: nelas, fmt() e formatar_p() decidem cada número.
+options(digits = 3)
 ```
 
 # Introdução
@@ -180,14 +210,14 @@ write_csv2(biometria, here("dados", "processados", "biometria.csv"))
 write_csv2(agua,      here("dados", "processados", "agua.csv"))
 ```
 
-::: {.content-visible when-format="html"}
-
+:::: {.content-visible when-format="html"}
 ## Exploração
 
 Antes de qualquer teste, olhar. Os chunks `explora-*` produzem resumos e gráficos exploratórios, sem compromisso estético: a ideia é entender a distribuição dos dados, ver se há valores estranhos e ter uma primeira impressão do efeito do tratamento. Esta seção inteira existe só no caderno (HTML): no Word ela é removida, porque um relatório para leitor não mostra exploração.
 
 ::: callout-tip
 ## Como ler esta seção
+
 Cada exploração tem um chunk próprio, e a explicação do que se está procurando fica nos comentários dentro dele. Clique em **Código** para abrir o chunk e leia os comentários antes de olhar o gráfico: eles dizem o que conferir e o que seria sinal de problema.
 :::
 
@@ -248,7 +278,7 @@ ggplot(com_comprimento, aes(x = comprimento, y = peso_final)) +
 
 ```{r}
 #| label: explora-agua
-#| fig-height: 7
+#| fig-height: 5.2
 # O que conferir:
 #   - as linhas dos quatro tratamentos andam juntas em cada painel?
 #   - alguma semana com queda brusca (falha de aeração, chuva)?
@@ -271,8 +301,7 @@ ggplot(agua_resumo, aes(x = semana, y = media, colour = densidade)) +
   labs(x = "Semana", y = NULL, title = "Exploratório: qualidade de água") +
   tema_projeto()
 ```
-
-:::
+::::
 
 ## Análise dos dados
 
@@ -325,14 +354,14 @@ p_levene  <- formatar_p(teste_levene$`Pr(>F)`[1], no_texto = TRUE)
 coef_tend <- abs(coef(modelo_tendencia)[2])
 ```
 
-::: {.content-visible when-format="html"}
-
+:::: {.content-visible when-format="html"}
 ### Diagnóstico do modelo
 
 A ANOVA só vale se quatro coisas forem verdade. Uma vem do delineamento e as outras três se conferem nos resíduos do modelo. Os gráficos dizem mais que o p-valor dos testes: um p de Shapiro-Wilk pode passar com uma cauda feia, e o gráfico mostra a cauda. Esta seção existe só no caderno; no Word entram só os testes.
 
 ::: callout-tip
 ## Como ler esta seção
+
 Um chunk por pressuposto. Abra o **Código** de cada um: os comentários dizem o que o gráfico deveria mostrar e o que seria sinal de problema.
 :::
 
@@ -342,7 +371,7 @@ Um chunk por pressuposto. Abra o **Código** de cada um: os comentários dizem o
 
 ```{r}
 #| label: diagnostico-variancia
-#| fig-height: 4.5
+#| fig-height: 3.4
 # Resíduos × valores ajustados. O que conferir:
 #   - a nuvem de pontos tem a mesma altura em todos os grupos (colunas);
 #   - a linha vermelha fica perto de zero, sem curva;
@@ -355,7 +384,7 @@ plot(modelo_ganho, which = 1)
 
 ```{r}
 #| label: diagnostico-normalidade
-#| fig-height: 4.5
+#| fig-height: 3.4
 # Gráfico quantil-quantil. O que conferir:
 #   - os pontos seguem a linha pontilhada, com pequenos desvios nas pontas;
 #   - um "S" ou uma cauda que se descola é sinal de assimetria ou de
@@ -367,7 +396,7 @@ plot(modelo_ganho, which = 2)
 
 ```{r}
 #| label: diagnostico-influencia
-#| fig-height: 4.5
+#| fig-height: 3.4
 # Resíduos padronizados por nível do fator. O que conferir:
 #   - a maioria dos pontos entre -2 e 2;
 #   - um ponto além de 3 merece uma volta à planilha: erro de digitação ou
@@ -375,8 +404,7 @@ plot(modelo_ganho, which = 2)
 #   Os números ao lado dos pontos são as linhas da base, para você localizar.
 plot(modelo_ganho, which = 5)
 ```
-
-:::
+::::
 
 # Resultados
 
@@ -397,7 +425,7 @@ resumo_ganho |>
 
 ## Análise de variância
 
-A densidade de estocagem afetou o ganho de peso (F~`r gl_trat`,`r gl_res`~ = `r f_valor`; `r p_anova`; @tbl-anova). Os pressupostos foram atendidos: os resíduos não se afastaram da normalidade (Shapiro-Wilk, `r p_shapiro`) e as variâncias foram homogêneas entre tratamentos (Levene, `r p_levene`).
+A densidade de estocagem afetou o ganho de peso (*F*(`r gl_trat`, `r gl_res`) = `r f_valor`; `r p_anova`; @tbl-anova). Os pressupostos foram atendidos: os resíduos não se afastaram da normalidade (Shapiro-Wilk, `r p_shapiro`) e as variâncias foram homogêneas entre tratamentos (Levene, `r p_levene`).
 
 ```{r}
 #| label: tbl-anova
@@ -474,12 +502,10 @@ Nas condições do experimento, densidades maiores reduziram o ganho de peso da 
 ::: {#refs}
 :::
 
-::: {.content-visible when-format="html"}
-
+:::: {.content-visible when-format="html"}
 ::: callout-note
 ## Sobre este documento
 
 Este arquivo é o projeto inteiro: importa a planilha, prepara os dados, explora, analisa e escreve, nesta ordem. O mesmo `.qmd` gera o Word para o leitor e este caderno em HTML, com o código. Para refazer tudo do zero, reinicie o R e clique em Render. Para ver qualquer passo intermediário, rode o chunk correspondente no RStudio.
 :::
-
-:::
+::::

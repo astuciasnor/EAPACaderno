@@ -26,6 +26,7 @@ EAPACaderno/
 └── relatorios/
     ├── relatorio.qmd              O PROJETO: importa, prepara, explora, analisa e escreve
     ├── custom-reference.docx      modelo de página do Word (fonte, margens, sumário)
+    ├── ocean.scss                 cores e fontes do caderno HTML (identidade Ocean do EAPA)
     ├── referencias.bib            as obras citadas no texto
     ├── abnt.csl                   estilo ABNT das citações e da lista de referências (padrão)
     ├── apa.csl                    estilo APA, alternativo (troque a linha csl: no YAML)
@@ -59,7 +60,7 @@ Isso é *literate programming*: o código e o texto vivem no mesmo lugar, na
 ordem em que a análise é pensada. O mesmo arquivo gera **dois documentos**:
 
 - **`relatorio.docx`, para o leitor.** Estrutura de artigo científico
-  (Introdução, Material e métodos, Resultados, Discussão, Conclusão,
+  (Resumo, Introdução, Material e métodos, Resultados, Discussão, Conclusão,
   Referências), só com texto, tabelas e figuras. As seções de exploração e o
   diagnóstico dos resíduos são removidos (`content-visible when-format="html"`).
 - **`relatorio.html`, o caderno do pesquisador.** Tudo o que está no Word, mais
@@ -112,6 +113,25 @@ chunks com `eval: false` entram comentados, e o texto fica de fora. O `.R` é
 um subproduto: a fonte continua sendo o `.qmd`, e um novo `purl()` refaz o
 script quando o relatório mudar.
 
+## A aparência das duas saídas
+
+Cada saída tem o seu arquivo de estilo, e o `.qmd` não sabe de nenhum dos dois:
+
+- **Word:** `custom-reference.docx`, o mesmo modelo de página da CatalyseR,
+  com cara de artigo (Times New Roman 12, A4, margens ABNT, títulos numerados,
+  sem sumário). Para mudar fonte, margem ou estilo de título, edite os estilos
+  desse arquivo no Word, salve, e o próximo Render usa o novo.
+- **HTML:** `ocean.scss`, um arquivo pequeno com as cores e as fontes do
+  ecossistema (azul-marinho nos títulos, azul-petróleo nos links, Cambria e
+  Calibri). Para mudar uma cor, mude uma variável no topo dele.
+
+O YAML do `.qmd` só aponta para os dois (`reference-doc` e `theme`) e define
+o que é de cada formato: no Word, tamanho e resolução das figuras; no HTML, a
+faixa de título, o índice à esquerda (no alto, ao lado do Resumo), o código
+dobrado e os botões de copiar.
+As legendas saem como "Tabela 1 – ..." e "Figura 1 – ..." nos dois, no padrão
+da ABNT (`crossref: title-delim`).
+
 ## Mudar o texto, inserir imagens
 
 O `.qmd` é seu para escrever. O texto entre os chunks é a prosa do relatório:
@@ -132,6 +152,36 @@ O `#fig-tanques` dá um rótulo à figura; no texto, `@fig-tanques` vira "Figura
 com o número certo, lado a lado com as figuras feitas em código. O `../` sobe de
 `relatorios/` para a raiz e desce em `imagens/`. Uma foto assim aparece nas duas
 saídas, no Word e no HTML.
+
+## Mostrar algo só no caderno (ou só no Word)
+
+As seções de Exploração e de Diagnóstico existem apenas no HTML. Quem faz isso
+é uma **cerca de dois-pontos** em volta do trecho, com a condição nas chaves:
+
+```
+::: {.content-visible when-format="html"}
+
+## Exploração
+
+O que estiver aqui dentro (texto, chunks, figuras) só aparece no caderno.
+
+:::
+```
+
+A cerca de fechamento é uma linha só com `:::`. Para o contrário, use
+`.content-hidden when-format="docx"`: o trecho vale para todos os formatos,
+menos o Word.
+
+Uma regra a lembrar quando houver caixa dentro de caixa (por exemplo, um
+*callout* dentro da seção): **a cerca de fora precisa de mais dois-pontos que a
+de dentro**. Por isso, no `relatorio.qmd`, a seção usa `::::` e o callout,
+`:::`. É assim que o Pandoc sabe qual fechamento pertence a qual abertura.
+
+No editor visual do RStudio, o caminho é **Insert → Div**; a caixa aparece com
+as etiquetas `.content-visible` e `when-format="html"` no canto, e clicar nelas
+abre a edição. No editor de código, é só escrever as cercas.
+
+## As citações
 
 As citações usam `[@chave]` no texto e as obras ficam em `referencias.bib`;
 o Quarto monta a lista de referências no fim, no estilo do arquivo `.csl`
@@ -157,6 +207,30 @@ análise, no lugar onde ela se confere.
    `quarto render relatorios/relatorio.qmd` gera os dois).
 
 Se o Render passa com a memória limpa, a análise é reprodutível.
+
+## Rodar chunk a chunk, sem tropeçar nas cercas
+
+Durante o trabalho você não renderiza a cada mudança: roda um chunk e olha o
+console. Três jeitos, do mais seguro para o mais arriscado:
+
+- **O chunk inteiro:** clique no triângulo verde no canto do chunk, ou ponha o
+  cursor dentro dele e tecle **Ctrl+Shift+Enter**.
+- **Uma linha:** cursor na linha, **Ctrl+Enter**. Com o cursor dentro do chunk,
+  o RStudio manda só o código.
+- **Selecionar com o mouse e teclar Ctrl+Enter:** é aqui que se erra. Se a
+  seleção pegar as linhas de crases (` ``` `) que abrem e fecham o chunk, elas
+  vão para o console e o R responde:
+
+  ```
+  Erro: tentativa de usar um nome de variável com comprimento zero
+  ```
+
+  Não é erro do seu código: o R leu ` ``` ` como um nome entre crases vazio. O
+  código da seleção rodou normalmente. Selecione só as linhas de código, ou
+  use um dos dois primeiros jeitos.
+
+Uma ordem que ajuda: rode `pacotes`, depois `importar` e `tratar`. A partir
+daí, qualquer chunk de análise encontra os dados na memória.
 
 ## Relação com a CatalyseR
 
