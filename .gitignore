@@ -14,7 +14,6 @@ relatorios/*_files/
 relatorios/relatorio.docx
 relatorios/relatorio.html
 relatorios/relatorio.pdf
-relatorios/relatorio.R      # o script extraído com knitr::purl()
 
 # Dados gerados pelo chunk `tratar` (a planilha bruta é a fonte)
 dados/processados/

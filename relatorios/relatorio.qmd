@@ -15,97 +15,142 @@ abstract: |
   semanas. O ganho de peso caiu com a densidade; as duas menores não diferiram
   entre si, e a perda concentrou-se a partir de 150 peixes/m³. Os dados são
   fictícios e servem para ilustrar o método.
-bibliography: referencias.bib                        # as obras citadas no texto ([@chave])
-csl: abnt.csl                                        # estilo das citações e da lista: ABNT (padrão)
-# csl: apa.csl                                       # ... ou APA: troque a linha acima por esta
+
+# Obras citadas no texto por meio de [@chave].
+bibliography: referencias.bib
+# Estilo ABNT para as citações e a lista de referências.
+csl: abnt.csl
+# Para usar APA, substitua a linha acima pela linha abaixo.
+# csl: apa.csl
 crossref:
-  title-delim: " – "                                 # "Tabela 1 – ..." em vez de "Tabela 1: ...", como na ABNT
+  # Usa “Tabela 1 – ...” em vez de “Tabela 1: ...”, conforme a ABNT.
+  title-delim: " – "
 format:
-  # 1. O Word: o relatório para o leitor. Só texto, tabelas e figuras.
+  # 1. Word: relatório para o leitor, somente com texto, tabelas e figuras.
   docx:
-    reference-doc: custom-reference.docx   # modelo de página com cara de artigo (o mesmo da CatalyseR)
-    toc: false                              # artigo não tem sumário
+    # Modelo de página com aparência de artigo, como no CatalyseR.
+    reference-doc: custom-reference.docx
+    # Artigos normalmente não apresentam sumário.
+    toc: false
     number-sections: true
-    fig-width: 4.9                          # 12,5 cm: sobra margem dos dois lados, como em artigo
-    fig-height: 3.0                         # 7,6 cm
+    # Largura de 12,5 cm, com margens laterais semelhantes às de um artigo.
+    fig-width: 4.9
+    # Altura de 7,6 cm.
+    fig-height: 3.0
     fig-dpi: 300
     fig-align: center
-  # 2. O HTML: o caderno do pesquisador. O mesmo documento, com o código
-  #    dobrado (clique em "Código" para abrir) e a exploração à mostra.
+  # 2. HTML: caderno com código recolhido e exploração disponível.
   html:
-    theme: [cosmo, ocean.scss]              # cores e fontes do ecossistema EAPA (Ocean Gradient)
-    title-block-banner: "#0F3B5F"           # faixa azul-marinho com título, autor e data
+    # Cores e fontes do ecossistema EAPA.
+    theme: [cosmo, ocean.scss]
+    # Faixa azul-marinho com título, autor e data.
+    title-block-banner: "#0F3B5F"
     title-block-banner-color: "white"
     toc: true
-    toc-location: left                      # índice à esquerda; o ocean.scss o sobe para o alto, ao lado do Resumo
+    # Índice à esquerda, alinhado ao alto pelo arquivo ocean.scss.
+    toc-location: left
     toc-depth: 2
     toc-title: "Neste caderno"
     number-sections: true
-    embed-resources: true                   # um único arquivo .html, fácil de enviar
-    echo: true                              # aqui o código aparece...
-    code-fold: true                         # ... dobrado, para não atrapalhar a leitura
+    # Gera um único arquivo HTML, facilitando seu compartilhamento.
+    embed-resources: true
+    # Exibe o código na versão HTML.
+    echo: true
+    # Mantém o código recolhido para não atrapalhar a leitura.
+    code-fold: true
     code-summary: "Código"
-    code-tools: true                        # menu no topo: mostrar/esconder todo o código
-    code-copy: true                         # botão de copiar em cada bloco
-    df-print: kable                         # tabelas exploratórias como tabela, não como texto de console
-    fig-width: 5.2                          # figuras menores que no Word: a tela é mais estreita que a página
+    # Adiciona o menu para mostrar ou esconder todo o código.
+    code-tools: true
+    # Adiciona um botão para copiar cada bloco de código.
+    code-copy: true
+    # Exibe tabelas exploratórias como tabelas, não como texto do console.
+    df-print: kable
+    # Define a largura das figuras no HTML, independentemente do Word.
+    fig-width: 5.2
     fig-height: 3.2
     fig-align: center
     smooth-scroll: true
 execute:
-  echo: false                  # no Word, o leitor vê resultados, não código
+  # No Word, apresenta os resultados sem exibir o código.
+  echo: false
   warning: false
   message: false
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
+```{r}
+#| label: codigo-do-script
+#| include: false
+# O código deste relatório é copiado de R/analise.R, onde mora junto com os
+# comentários que explicam cada passo. A primeira linha de cada chunk diz de
+# quais trechos ele veio. Esta conferência avisa, no Render, se alguém mudou
+# o script e esqueceu de trazer a mudança para cá.
+source(here::here("R", "funcoes.R"))
+conferir_codigo()
+```
+
+```{r}
+#| label: atualizar
+#| eval: false
+# Editou R/analise.R? Rode este chunk (Ctrl+Shift+Enter). Ele traz o código
+# novo, sem os comentários, para dentro dos chunks abaixo. Não roda no Render.
+source(here::here("R", "funcoes.R"))
+atualizar_codigo()
+```
+
 ```{=html}
 <!--
-  Este documento é o projeto inteiro: os dados entram, são preparados,
-  explorados e analisados aqui dentro, e o texto é escrito em cima dos
-  resultados. Não há scripts separados. Para refazer tudo do zero, reinicie
-  o R (Ctrl+Shift+F10) e clique em Render.
-
-  Os chunks têm nomes que dizem o que fazem: pacotes, importar, tratar,
-  explora-*, analisar, tbl-*, fig-*. Rode qualquer um deles no RStudio
-  (Ctrl+Shift+Enter) e a saída aparece no console, como sempre. O que vai
-  para o Word é só o que este arquivo manda: tabelas, figuras e o texto.
+GUIA DE EDIÇÃO — relatorio.qmd
+O código comentado está em R/analise.R; cada chunk diz na primeira linha de quais trechos veio.
+YAML: format.docx e format.html definem apresentação; execute define execução.
+#| label identifica o chunk; fig-cap e tbl-cap definem legendas e referências.
+#| include: false executa o bloco, mas não inclui código nem resultados.
+#| output: false oculta resultados textuais; não desativa a execução.
+#| eval: false não executa o bloco durante a renderização.
+As três divisões content-visible abaixo são EXIBIDAS SOMENTE NO HTML.
+Esse filtro de exibição não impede que seus códigos sejam executados no Word.
+Editou o script? Rode o chunk `atualizar`; o Render confere sozinho.
 -->
 ```
 
 ```{r}
 #| label: instalar
+#| include: false
 #| eval: false
-# Rode este chunk UMA vez, em computador novo (Ctrl+Shift+Enter). Ele instala
-# o que faltar e não roda no Render (eval: false).
-pacotes <- c("here", "readxl", "readr", "dplyr", "tidyr", "ggplot2",
-             "car", "multcompView", "flextable")
+# fonte: instalar
+
+instalar_agora <- FALSE   # troque para TRUE se precisar instalar
+
+pacotes <- c(
+  "here", "readxl", "readr", "dplyr", "tidyr", "ggplot2",
+  "car", "multcompView", "flextable"
+)
+
 faltando <- pacotes[!pacotes %in% rownames(installed.packages())]
-if (length(faltando)) install.packages(faltando)
+
+if (instalar_agora && length(faltando)) {
+  install.packages(faltando)
+}
 ```
 
 ```{r}
 #| label: pacotes
 #| include: false
-# Os pacotes que o documento usa. here() monta os caminhos a partir da raiz
-# do projeto (onde está o .Rproj), então o mesmo arquivo roda em qualquer
-# computador. As funções próprias (resumos, tema, tabelas) vêm de R/funcoes.R.
+# fonte: pacotes
+
 library(here)
-library(readxl)        # ler a planilha
-library(readr)         # write_csv2(): csv no padrão brasileiro (; e vírgula)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-library(car)           # leveneTest()
-library(multcompView)  # multcompLetters(): letras a partir do Tukey
-library(flextable)     # tabelas no Word; o visual vem de flextable_ocean()
+library(readxl)         # Leitura de planilhas Excel
+library(readr)          # Exportação de CSV no padrão brasileiro
+library(dplyr)          # Manipulação de dados
+library(tidyr)          # Reorganização de dados
+library(ggplot2)        # Construção dos gráficos
+library(car)            # Teste de Levene
+library(multcompView)   # Letras dos grupos após o teste de Tukey
+library(flextable)      # Tabelas formatadas para o Word
 
 source(here("R", "funcoes.R"))
 
-# Três casas decimais nas tabelas exploratórias do caderno. Sem isto, o R
-# imprime sete (149.11667), o que polui a leitura. As tabelas do relatório
-# não dependem disto: nelas, fmt() e formatar_p() decidem cada número.
 options(digits = 3)
 ```
 
@@ -119,35 +164,34 @@ A pergunta é simples: aumentar a densidade reduz o ganho de peso? E, se reduz, 
 
 ## Os dados
 
-Os dados foram registrados em planilha de campo (`dados/brutos/crescimento_tilapia.xlsx`), com duas abas: `biometria` (uma linha por tanque) e `agua` (uma linha por tanque e semana). A planilha é somente-leitura: nunca a editamos à mão. Toda correção é feita em código, no chunk `tratar`, com um comentário dizendo o porquê.
+Os dados foram registrados em planilha de campo (`dados/brutos/crescimento_tilapia.xlsx`), com duas abas: `biometria` (uma linha por tanque) e `agua` (uma linha por tanque e semana). A planilha é somente-leitura: nunca a editamos à mão. Toda correção é feita em código, nos chunks `tratar`, `tratar-biometria` e `tratar-agua`; as justificativas estão nas seções correspondentes de `R/analise.R`.
 
 ```{r}
-#| label: importar
+#| label: importar-e-conferir
 #| output: false
-# Ler a planilha como ela veio, sem mexer em nada. A aba "biometria" tem duas
-# linhas de título antes do cabeçalho, por isso o skip = 3.
+# fonte: importar, conferir-importacao
+
 arquivo <- here("dados", "brutos", "crescimento_tilapia.xlsx")
-excel_sheets(arquivo)              # vale sempre olhar as abas antes de ler
+
+excel_sheets(arquivo)
 
 biometria_bruta <- read_excel(arquivo, sheet = "biometria", skip = 3)
-agua_bruta      <- read_excel(arquivo, sheet = "agua")
+agua_bruta <- read_excel(arquivo, sheet = "agua")
 
-# Primeira olhada. Repare: "Peso final (g)" veio como texto (chr) porque
-# alguém digitou um valor com vírgula. O chunk seguinte resolve.
 str(biometria_bruta)
 str(agua_bruta)
 ```
 
 ## Preparo dos dados
 
-Aqui a planilha de campo vira uma base de análise: nomes de coluna curtos, cada coluna com o tipo certo, valores faltantes como `NA` e as variáveis derivadas calculadas uma vez só. Se alguém perguntar "por que o tanque 19 está sem sobrevivência?", a resposta está no chunk abaixo.
+Aqui a planilha de campo vira uma base de análise: nomes de coluna curtos, cada coluna com o tipo certo, valores faltantes como `NA` e as variáveis derivadas calculadas uma vez só. Se alguém perguntar "por que o tanque 19 está sem sobrevivência?", a transformação está no chunk `tratar-biometria`, e a justificativa está na seção de mesmo nome em `R/analise.R`.
 
 ```{r}
-#| label: tratar
+#| label: preparo
 #| output: false
-# 1. Renomear à mão: deixa explícito o "de-para" entre a planilha e a base.
-#    (Para planilhas grandes, janitor::clean_names() faz isso automaticamente.)
-biometria <- biometria_bruta |>
+# fonte: tratar, tratar-biometria, tratar-agua, conferir-dados, exportar-dados
+
+biometria_nomes <- biometria_bruta |>
   rename(
     tanque        = `Tanque`,
     densidade     = `Densidade (peixes/m³)`,
@@ -158,7 +202,7 @@ biometria <- biometria_bruta |>
     observacoes   = `Observações`
   )
 
-agua <- agua_bruta |>
+agua_nomes <- agua_bruta |>
   rename(
     tanque      = `Tanque`,
     semana      = `Semana`,
@@ -167,48 +211,38 @@ agua <- agua_bruta |>
     ph          = `pH`
   )
 
-# 2. Acertar os tipos e os NA
-biometria <- biometria |>
+biometria <- biometria_nomes |>
   mutate(
-    # Um "168,3" digitado como texto fez a coluna inteira virar texto.
-    # Trocamos a vírgula por ponto e convertemos para número.
-    peso_final    = as.numeric(sub(",", ".", peso_final, fixed = TRUE)),
+    peso_final = as.numeric(sub(",", ".", peso_final, fixed = TRUE)),
 
-    # O "-" que o anotador usou vira NA, o padrão do R para faltante.
-    # Os dois NA da base têm motivo conhecido, e vale registrá-lo aqui:
-    # T14 sem comprimento (ictiômetro quebrado) e T19 sem sobrevivência
-    # (contagem não realizada). Ver também a aba "leia-me" da planilha.
     sobrevivencia = as.numeric(na_if(sobrevivencia, "-")),
-    comprimento   = as.numeric(comprimento),
+    comprimento = as.numeric(comprimento),
 
-    # A densidade é o tratamento: guardamos as duas versões, porque a ANOVA
-    # usa o fator e a regressão (tendência) usa o número.
     densidade_num = as.numeric(densidade),
-    densidade     = factor(densidade, levels = c(50, 100, 150, 200)),
+    densidade = factor(densidade, levels = c(50, 100, 150, 200)),
 
-    # Variável derivada
     ganho_peso = peso_final - peso_inicial
   ) |>
-  # Ordem das colunas: identificação, tratamento, respostas, resto
-  select(tanque, densidade, densidade_num, peso_inicial, peso_final,
-         ganho_peso, comprimento, sobrevivencia, observacoes)
+  select(
+    tanque, densidade, densidade_num, peso_inicial, peso_final,
+    ganho_peso, comprimento, sobrevivencia, observacoes
+  )
 
-agua <- agua |>
+agua <- agua_nomes |>
   mutate(semana = as.integer(semana))
 
-# 3. Conferir. Um resumo rápido pega a maioria dos problemas: NA a mais,
-#    valor absurdo, fator com nível que não devia existir.
 glimpse(biometria)
 summary(biometria)
-count(biometria, densidade)     # espera-se 6 tanques por densidade
 
-# 4. Guardar a base tratada em .csv, para quem quiser abrir no Excel ou em
-#    outro programa. É entrega, não fonte: o relatório trabalha com os
-#    objetos que estão na memória.
+count(biometria, densidade)
+
 dir.create(here("dados", "processados"), showWarnings = FALSE)
+
 write_csv2(biometria, here("dados", "processados", "biometria.csv"))
-write_csv2(agua,      here("dados", "processados", "agua.csv"))
+write_csv2(agua, here("dados", "processados", "agua.csv"))
 ```
+
+<!-- A seção de EXPLORAÇÃO abaixo está estruturada como uma div para agrupar o conteúdo exploratório e exibi-lo exclusivamente na versão HTML do relatório. -->
 
 :::: {.content-visible when-format="html"}
 ## Exploração
@@ -218,17 +252,15 @@ Antes de qualquer teste, olhar. Os chunks `explora-*` produzem resumos e gráfic
 ::: callout-tip
 ## Como ler esta seção
 
-Cada exploração tem um chunk próprio, e a explicação do que se está procurando fica nos comentários dentro dele. Clique em **Código** para abrir o chunk e leia os comentários antes de olhar o gráfico: eles dizem o que conferir e o que seria sinal de problema.
+Cada exploração tem um chunk próprio. Clique em **Código** para examinar os comandos; para estudar o raciocínio e saber o que conferir, consulte a seção de mesmo nome em `R/analise.R`.
 :::
 
 **Resumo por tratamento.** O primeiro contato com os números: quantos tanques por densidade, média, desvio e intervalo de confiança. Serve para conferir se o delineamento está inteiro (seis tanques por grupo) e se a ordem das médias já sugere o efeito.
 
 ```{r}
 #| label: explora-resumo
-# O que conferir:
-#   - n = 6 em todos os grupos (nenhum tanque perdido);
-#   - as médias caem com a densidade? Se sim, a ANOVA tende a dar F alto;
-#   - desvios parecidos entre grupos (senão, atenção ao teste de Levene).
+# fonte: explora-resumo
+
 resumir_grupo(biometria, ganho_peso, densidade)
 resumir_grupo(biometria, sobrevivencia, densidade)
 ```
@@ -237,17 +269,16 @@ resumir_grupo(biometria, sobrevivencia, densidade)
 
 ```{r}
 #| label: explora-ganho
-# O que conferir:
-#   - caixas de tamanho parecido (variâncias homogêneas);
-#   - nenhum ponto muito fora da sua caixa (possível erro de digitação);
-#   - a mediana desce com a densidade? É o efeito que a ANOVA vai testar.
-# Boxplot + pontos: o boxplot mostra a forma, os pontos mostram quantos
-# tanques há e onde cada um caiu.
+# fonte: explora-ganho
+
 ggplot(biometria, aes(x = densidade, y = ganho_peso)) +
   geom_boxplot(width = 0.5, outlier.shape = NA, colour = "grey50") +
   geom_jitter(width = 0.1, height = 0, size = 2, alpha = 0.7) +
-  labs(x = "Densidade (peixes/m³)", y = "Ganho de peso (g)",
-       title = "Exploratório: ganho de peso por densidade") +
+  labs(
+    x = "Densidade (peixes/m³)",
+    y = "Ganho de peso (g)",
+    title = "Exploratório: ganho de peso por densidade"
+  ) +
   tema_projeto()
 ```
 
@@ -255,22 +286,23 @@ ggplot(biometria, aes(x = densidade, y = ganho_peso)) +
 
 ```{r}
 #| label: explora-peso-comprimento
-# O que conferir:
-#   - os pontos formam uma nuvem crescente e apertada?
-#   - algum ponto isolado (peso alto com comprimento baixo, ou o contrário)?
-#     Se houver, volte à planilha e confira o tanque.
-# Serve para pegar erro de digitação: um peixe de 180 g com 10 cm não existe.
-# O T14 não tem comprimento (ver o chunk tratar). Preferimos tirá-lo de
-# propósito e dizer quantos ficaram de fora, em vez de deixar o ggplot
-# descartar em silêncio.
+# fonte: explora-peso-comprimento
+
 com_comprimento <- filter(biometria, !is.na(comprimento))
-message(nrow(biometria) - nrow(com_comprimento), " tanque(s) sem comprimento ficaram fora deste gráfico.")
+
+message(
+  nrow(biometria) - nrow(com_comprimento),
+  " tanque(s) sem comprimento ficaram fora deste gráfico."
+)
 
 ggplot(com_comprimento, aes(x = comprimento, y = peso_final)) +
   geom_point(size = 2, alpha = 0.7) +
   geom_smooth(method = "lm", se = FALSE, colour = "grey40", linewidth = 0.6) +
-  labs(x = "Comprimento final (cm)", y = "Peso final (g)",
-       title = "Exploratório: peso × comprimento") +
+  labs(
+    x = "Comprimento final (cm)",
+    y = "Peso final (g)",
+    title = "Exploratório: peso × comprimento"
+  ) +
   tema_projeto()
 ```
 
@@ -279,16 +311,15 @@ ggplot(com_comprimento, aes(x = comprimento, y = peso_final)) +
 ```{r}
 #| label: explora-agua
 #| fig-height: 5.2
-# O que conferir:
-#   - as linhas dos quatro tratamentos andam juntas em cada painel?
-#   - alguma semana com queda brusca (falha de aeração, chuva)?
-#   - oxigênio abaixo de 3 mg/L em algum grupo é sinal de alerta.
-# A tabela "agua" está no formato longo (uma linha por tanque × semana).
-# Juntamos a densidade de cada tanque e olhamos a média semanal por tratamento.
+# fonte: explora-agua
+
 agua_resumo <- agua |>
   left_join(select(biometria, tanque, densidade), by = "tanque") |>
-  pivot_longer(c(temperatura, oxigenio, ph),
-               names_to = "variavel", values_to = "valor") |>
+  pivot_longer(
+    c(temperatura, oxigenio, ph),
+    names_to = "variavel",
+    values_to = "valor"
+  ) |>
   group_by(densidade, semana, variavel) |>
   summarise(media = mean(valor, na.rm = TRUE), .groups = "drop")
 
@@ -298,53 +329,50 @@ ggplot(agua_resumo, aes(x = semana, y = media, colour = densidade)) +
   facet_wrap(~ variavel, scales = "free_y", ncol = 1) +
   scale_colour_manual(values = cores_tratamento, name = "Densidade (peixes/m³)") +
   scale_x_continuous(breaks = 1:8) +
-  labs(x = "Semana", y = NULL, title = "Exploratório: qualidade de água") +
+  labs(
+    x = "Semana",
+    y = NULL,
+    title = "Exploratório: qualidade de água"
+  ) +
   tema_projeto()
 ```
 ::::
+
+<!-- FIM DA SEÇÃO EXIBIDA SOMENTE NO HTML -->
 
 ## Análise dos dados
 
 O ganho de peso de cada tanque foi calculado como a diferença entre o peso médio final e o inicial. A comparação entre densidades usou análise de variância a um fator, seguida do teste de Tukey quando o F foi significativo. Os pressupostos foram verificados nos resíduos do modelo com os testes de Shapiro-Wilk (normalidade) e de Levene (homogeneidade de variâncias) e com os gráficos de diagnóstico. Como os níveis do fator são quantitativos, a tendência do ganho de peso em função da densidade foi resumida por regressão linear. Adotou-se 5 % de significância [@zar2010]. Todas as análises foram feitas em R [@rcore2025].
 
 ```{r}
-#| label: analisar
+#| label: analise
 #| output: false
-# Roteiro clássico do DIC:
-#   1. ajustar o modelo (ANOVA a um fator);
-#   2. verificar os pressupostos nos resíduos;
-#   3. se F for significativo, comparar as médias (Tukey);
-#   4. como o fator é quantitativo, olhar também a tendência (regressão).
+# fonte: analisar, analisar-pressupostos, analisar-tukey, analisar-tendencia, preparar-resultados-texto
 
-# 1. Modelo: ganho de peso ~ densidade (fator)
 modelo_ganho <- aov(ganho_peso ~ densidade, data = biometria)
 tabela_anova <- anova(modelo_ganho)
 tabela_anova
 
-# 2. Pressupostos. p > 0,05 em ambos = sem evidência contra os pressupostos.
 teste_normalidade <- shapiro.test(residuals(modelo_ganho))
-teste_levene      <- leveneTest(ganho_peso ~ densidade, data = biometria)
+teste_levene <- leveneTest(ganho_peso ~ densidade, data = biometria)
+
 teste_normalidade
 teste_levene
 
-# 3. Comparação de médias (Tukey HSD) e letras de significância:
-#    médias com a mesma letra não diferem (p > 0,05).
 tukey_ganho <- TukeyHSD(modelo_ganho, "densidade")
 tukey_ganho
+
 letras <- multcompLetters(tukey_ganho$densidade[, "p adj"])$Letters
 
 resumo_ganho <- resumir_grupo(biometria, ganho_peso, densidade) |>
   mutate(letra = letras[as.character(densidade)]) |>
   arrange(densidade)
+
 resumo_ganho
 
-# 4. Tendência: a regressão resume o efeito em um único coeficiente
-#    (g de ganho a menos por peixe/m³ a mais).
 modelo_tendencia <- lm(ganho_peso ~ densidade_num, data = biometria)
 summary(modelo_tendencia)
 
-# Números que entram no meio do texto. fmt() e formatar_p() (de R/funcoes.R)
-# cuidam da vírgula decimal e das casas.
 f_valor   <- fmt(tabela_anova$`F value`[1])
 gl_trat   <- tabela_anova$Df[1]
 gl_res    <- tabela_anova$Df[2]
@@ -354,6 +382,8 @@ p_levene  <- formatar_p(teste_levene$`Pr(>F)`[1], no_texto = TRUE)
 coef_tend <- abs(coef(modelo_tendencia)[2])
 ```
 
+<!-- SOMENTE NA EXIBIÇÃO HTML — DIAGNÓSTICO -->
+
 :::: {.content-visible when-format="html"}
 ### Diagnóstico do modelo
 
@@ -362,7 +392,7 @@ A ANOVA só vale se quatro coisas forem verdade. Uma vem do delineamento e as ou
 ::: callout-tip
 ## Como ler esta seção
 
-Um chunk por pressuposto. Abra o **Código** de cada um: os comentários dizem o que o gráfico deveria mostrar e o que seria sinal de problema.
+Cada diagnóstico tem um chunk próprio. Abra o **Código** para examinar os comandos e consulte a seção correspondente em `R/analise.R` para entender o que observar no gráfico.
 :::
 
 **1. Independência das observações.** Não se testa; garante-se no delineamento. Aqui, cada tanque-rede é uma unidade experimental sorteada para uma densidade, e a medida é o peso médio do tanque, não o de peixes individuais (que seriam pseudorréplicas). Se isso não fosse verdade, nenhum gráfico abaixo salvaria a análise.
@@ -372,11 +402,8 @@ Um chunk por pressuposto. Abra o **Código** de cada um: os comentários dizem o
 ```{r}
 #| label: diagnostico-variancia
 #| fig-height: 3.4
-# Resíduos × valores ajustados. O que conferir:
-#   - a nuvem de pontos tem a mesma altura em todos os grupos (colunas);
-#   - a linha vermelha fica perto de zero, sem curva;
-#   - um funil (dispersão crescendo com a média) é sinal de variância
-#     heterogênea: pense em transformar a resposta ou usar Welch/Kruskal.
+# fonte: diagnostico-variancia
+
 plot(modelo_ganho, which = 1)
 ```
 
@@ -385,10 +412,8 @@ plot(modelo_ganho, which = 1)
 ```{r}
 #| label: diagnostico-normalidade
 #| fig-height: 3.4
-# Gráfico quantil-quantil. O que conferir:
-#   - os pontos seguem a linha pontilhada, com pequenos desvios nas pontas;
-#   - um "S" ou uma cauda que se descola é sinal de assimetria ou de
-#     valor extremo. Com n pequeno (aqui, 24), pequenos desvios são normais.
+# fonte: diagnostico-normalidade
+
 plot(modelo_ganho, which = 2)
 ```
 
@@ -397,14 +422,13 @@ plot(modelo_ganho, which = 2)
 ```{r}
 #| label: diagnostico-influencia
 #| fig-height: 3.4
-# Resíduos padronizados por nível do fator. O que conferir:
-#   - a maioria dos pontos entre -2 e 2;
-#   - um ponto além de 3 merece uma volta à planilha: erro de digitação ou
-#     um tanque que passou por algo diferente (ver a coluna observacoes).
-#   Os números ao lado dos pontos são as linhas da base, para você localizar.
+# fonte: diagnostico-influencia
+
 plot(modelo_ganho, which = 5)
 ```
 ::::
+
+<!-- FIM DA SEÇÃO EXIBIDA SOMENTE NO HTML -->
 
 # Resultados
 
@@ -415,11 +439,22 @@ A @tbl-resumo apresenta o ganho de peso por densidade. A queda das médias com o
 ```{r}
 #| label: tbl-resumo
 #| tbl-cap: "Ganho de peso (g) em 8 semanas por densidade de estocagem. Médias seguidas da mesma letra não diferem pelo teste de Tukey (p > 0,05)."
+# fonte: tbl-resumo
+
 resumo_ganho |>
-  mutate(`IC 95 %` = paste0(fmt(ic_inf, 1), " a ", fmt(ic_sup, 1)),
-         across(c(media, dp, ep), ~ fmt(.x, 1))) |>
-  select(`Densidade (peixes/m³)` = densidade, n, `Média` = media,
-         DP = dp, EP = ep, `IC 95 %`, Tukey = letra) |>
+  mutate(
+    `IC 95 %` = paste0(fmt(ic_inf, 1), " a ", fmt(ic_sup, 1)),
+    across(c(media, dp, ep), ~ fmt(.x, 1))
+  ) |>
+  select(
+    `Densidade (peixes/m³)` = densidade,
+    n,
+    `Média` = media,
+    DP = dp,
+    EP = ep,
+    `IC 95 %`,
+    Tukey = letra
+  ) |>
   flextable_ocean()
 ```
 
@@ -430,16 +465,19 @@ A densidade de estocagem afetou o ganho de peso (*F*(`r gl_trat`, `r gl_res`) = 
 ```{r}
 #| label: tbl-anova
 #| tbl-cap: "Análise de variância do ganho de peso."
+# fonte: tbl-anova
+
 tabela_anova |>
   as.data.frame() |>
-  mutate(Fonte = c("Densidade", "Resíduo"),
-         GL = Df,
-         SQ = fmt(`Sum Sq`, 1),
-         QM = fmt(`Mean Sq`, 1),
-         F  = fmt(`F value`),
-         p  = formatar_p(`Pr(>F)`)) |>
+  mutate(
+    Fonte = c("Densidade", "Resíduo"),
+    GL = Df,
+    SQ = fmt(`Sum Sq`, 1),
+    QM = fmt(`Mean Sq`, 1),
+    F = fmt(`F value`),
+    p = formatar_p(`Pr(>F)`)
+  ) |>
   select(Fonte, GL, SQ, QM, F, p) |>
-  # A linha do resíduo não tem F nem p: fica em branco, não "NA" nem "-".
   mutate(across(c(F, p), ~ ifelse(is.na(.x) | .x == "-", "", .x))) |>
   flextable_ocean()
 ```
@@ -449,24 +487,43 @@ A @fig-ganho mostra os tanques individuais, as médias com seus intervalos de co
 ```{r}
 #| label: fig-ganho
 #| fig-cap: "Ganho de peso por densidade de estocagem. Pontos: tanques-rede; círculo: média ± IC 95 %; letras iguais indicam médias que não diferem (Tukey, p > 0,05)."
-# A figura é feita aqui mesmo: o Quarto numera, legenda e coloca no Word.
+# fonte: fig-ganho
+
 ggplot() +
-  geom_jitter(data = biometria,
-              aes(x = densidade, y = ganho_peso, colour = densidade),
-              width = 0.12, height = 0, size = 2, alpha = 0.6) +
-  geom_errorbar(data = resumo_ganho,
-                aes(x = densidade, ymin = ic_inf, ymax = ic_sup),
-                width = 0.2, linewidth = 0.6) +
-  geom_point(data = resumo_ganho,
-             aes(x = densidade, y = media),
-             size = 3, shape = 21, fill = "white", stroke = 1) +
-  geom_text(data = resumo_ganho,
-            aes(x = densidade, y = ic_sup, label = letra),
-            vjust = -0.8, size = 4) +
+  geom_jitter(
+    data = biometria,
+    aes(x = densidade, y = ganho_peso, colour = densidade),
+    width = 0.12,
+    height = 0,
+    size = 2,
+    alpha = 0.6
+  ) +
+  geom_errorbar(
+    data = resumo_ganho,
+    aes(x = densidade, ymin = ic_inf, ymax = ic_sup),
+    width = 0.2,
+    linewidth = 0.6
+  ) +
+  geom_point(
+    data = resumo_ganho,
+    aes(x = densidade, y = media),
+    size = 3,
+    shape = 21,
+    fill = "white",
+    stroke = 1
+  ) +
+  geom_text(
+    data = resumo_ganho,
+    aes(x = densidade, y = ic_sup, label = letra),
+    vjust = -0.8,
+    size = 4
+  ) +
   scale_colour_manual(values = cores_tratamento, guide = "none") +
   scale_y_continuous(expand = expansion(mult = c(0.05, 0.12))) +
-  labs(x = "Densidade de estocagem (peixes/m³)",
-       y = "Ganho de peso em 8 semanas (g)") +
+  labs(
+    x = "Densidade de estocagem (peixes/m³)",
+    y = "Ganho de peso em 8 semanas (g)"
+  ) +
   tema_projeto()
 ```
 
@@ -477,13 +534,17 @@ Tratando a densidade como variável contínua, o ganho de peso caiu, em média, 
 ```{r}
 #| label: fig-tendencia
 #| fig-cap: "Relação linear entre densidade de estocagem e ganho de peso. Reta de regressão com IC 95 %."
+# fonte: fig-tendencia
+
 ggplot(biometria, aes(x = densidade_num, y = ganho_peso)) +
   geom_smooth(method = "lm", colour = "grey30", fill = "grey85", linewidth = 0.7) +
   geom_point(aes(colour = densidade), size = 2, alpha = 0.7) +
   scale_colour_manual(values = cores_tratamento, guide = "none") +
   scale_x_continuous(breaks = c(50, 100, 150, 200)) +
-  labs(x = "Densidade de estocagem (peixes/m³)",
-       y = "Ganho de peso em 8 semanas (g)") +
+  labs(
+    x = "Densidade de estocagem (peixes/m³)",
+    y = "Ganho de peso em 8 semanas (g)"
+  ) +
   tema_projeto()
 ```
 
@@ -502,10 +563,14 @@ Nas condições do experimento, densidades maiores reduziram o ganho de peso da 
 ::: {#refs}
 :::
 
+<!-- SOMENTE NA EXIBIÇÃO HTML — NOTA FINAL -->
+
 :::: {.content-visible when-format="html"}
 ::: callout-note
 ## Sobre este documento
 
-Este arquivo é o projeto inteiro: importa a planilha, prepara os dados, explora, analisa e escreve, nesta ordem. O mesmo `.qmd` gera o Word para o leitor e este caderno em HTML, com o código. Para refazer tudo do zero, reinicie o R e clique em Render. Para ver qualquer passo intermediário, rode o chunk correspondente no RStudio.
+Este arquivo reúne o fluxo do relatório: importa a planilha, prepara os dados, explora, analisa e escreve, nesta ordem. As explicações detalhadas dos códigos estão em `R/analise.R`; não é necessário executar esse script antes de renderizar o `.qmd`. O mesmo `.qmd` gera o Word para o leitor e este caderno em HTML, com o código. Para refazer tudo do zero, reinicie o R e clique em Render. Para ver qualquer passo intermediário, rode o chunk correspondente no RStudio.
 :::
 ::::
+
+<!-- FIM DA SEÇÃO EXIBIDA SOMENTE NO HTML -->

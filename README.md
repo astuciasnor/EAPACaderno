@@ -19,12 +19,13 @@ EAPACaderno/
 │   └── processados/               a base tratada em .csv, gerada pelo relatório, para o Excel
 │
 ├── R/
+│   ├── analise.R                  O CÓDIGO, comentado passo a passo: é aqui que se edita
 │   └── funcoes.R                  só DEFINIÇÕES de funções próprias (não roda nada)
 │
 ├── imagens/                       fotos, esquemas e mapas que NÃO vêm do código (começa vazia)
 │
 └── relatorios/
-    ├── relatorio.qmd              O PROJETO: importa, prepara, explora, analisa e escreve
+    ├── relatorio.qmd              O RELATÓRIO: o texto e o código (copiado de analise.R)
     ├── custom-reference.docx      modelo de página do Word (fonte, margens, sumário)
     ├── ocean.scss                 cores e fontes do caderno HTML (identidade Ocean do EAPA)
     ├── referencias.bib            as obras citadas no texto
@@ -35,7 +36,8 @@ EAPACaderno/
 ```
 
 A separação que importa é entre **o que entra** (`dados/brutos/`, `imagens/`),
-**o que a gente escreve** (`relatorios/relatorio.qmd`, `R/funcoes.R`) e **o que
+**o que a gente escreve** (`R/analise.R`, `relatorios/relatorio.qmd`,
+`R/funcoes.R`) e **o que
 o código gera** (`dados/processados/`, o `relatorio.docx`). Tudo da terceira
 categoria pode ser apagado e refeito com um Render. Uma foto em `imagens/`
 entra no relatório com `![legenda](../imagens/foto.jpg){#fig-foto}`, e o
@@ -46,15 +48,24 @@ Quarto a numera junto com as figuras feitas em código.
 O `relatorio.qmd` é o projeto inteiro. Ele segue a ordem natural de uma
 análise, e cada etapa é um chunk com nome que diz o que faz:
 
-| Etapa      | Chunk(s)              | O que acontece                                         | No Word? | No HTML? |
+| Etapa      | Chunk                 | Trechos de `R/analise.R` que ele reúne                  | No Word? | No HTML? |
 |------------|-----------------------|--------------------------------------------------------|----------|----------|
-| instalar   | `instalar`            | instala pacotes que faltam; roda uma vez (`eval: false`) | não | código |
-| pacotes    | `pacotes`             | `library()` e `source(funcoes.R)`                       | não | não |
-| importar   | `importar`            | lê a planilha como ela veio, sem mexer em nada          | não | código |
-| tratar     | `tratar`              | renomeia, corrige tipos, cria variáveis, grava o `.csv` | não | código |
-| explorar   | `explora-*`           | resumos e gráficos para olhar antes de testar           | não | código e gráficos |
-| analisar   | `analisar`, `diagnostico` | ANOVA, pressupostos, Tukey, tendência               | não | código e diagnóstico |
+| manter     | `codigo-do-script`, `atualizar` | conferem (no Render) e copiam (à mão) o código do script | não | não |
+| instalar   | `instalar`            | instala pacotes que faltam; roda uma vez (`eval: false`) | não | não |
+| pacotes    | `pacotes`             | `library()`, `source(funcoes.R)` e opções gerais        | não | não |
+| importar   | `importar-e-conferir` | `importar`, `conferir-importacao`: lê a planilha como veio e mostra os tipos | não | código |
+| tratar     | `preparo`             | `tratar`, `tratar-biometria`, `tratar-agua`, `conferir-dados`, `exportar-dados`: nomes, tipos, variáveis derivadas, conferência e `.csv` | não | código |
+| explorar   | `explora-*` (4)       | um trecho por exploração: resumos e gráficos para olhar antes de testar | não | código e gráficos |
+| analisar   | `analise`             | `analisar`, `analisar-pressupostos`, `analisar-tukey`, `analisar-tendencia`, `preparar-resultados-texto` | não | código |
+| diagnosticar | `diagnostico-*` (3) | um trecho por pressuposto do modelo, com seu gráfico   | não | código e gráficos |
 | comunicar  | `tbl-*`, `fig-*` e o texto | tabelas, figuras numeradas e a narrativa            | **sim** | **sim** |
+
+Cada trecho do script abre com um cabeçalho que diz o **objetivo**, a
+**entrada**, o que ele **produz**, de que trecho **depende** e, nos de
+exploração e diagnóstico, **o que conferir** no resultado. Assim dá para
+entender uma etapa sem ler o arquivo inteiro. Quando várias etapas se seguem
+sem texto entre elas (importar e conferir; as cinco de preparo; as cinco de
+análise), o relatório as reúne num chunk só, para o código não ficar picado.
 
 Isso é *literate programming*: o código e o texto vivem no mesmo lugar, na
 ordem em que a análise é pensada. O mesmo arquivo gera **dois documentos**:
@@ -101,17 +112,32 @@ estão no arquivo:
 Rodar chunk a chunk, aliás, não depende de formato nenhum: é o modo interativo
 do RStudio, e vale para o `.qmd` inteiro, esteja ele mirando Word ou HTML.
 
-**E se eu quiser um script puro?** Peça ao `knitr` que extraia o código dos
-chunks, na ordem, para um `.R`:
+## Onde o código mora: o script e o relatório
+
+O código aparece em dois lugares, mas só se **escreve** em um. Em
+`R/analise.R` ele vem com os comentários que explicam cada passo: por que
+`skip = 3`, por que o tanque 19 está sem sobrevivência, o que conferir em
+cada gráfico. No `relatorio.qmd` ele vem limpo, só as linhas que fazem
+alguma coisa, para que o caderno HTML mostre o que se fez sem a aula no meio,
+e para que qualquer chunk possa ser rodado linha a linha no RStudio.
+
+A ligação entre os dois é a primeira linha de cada chunk:
 
 ```r
-knitr::purl("relatorios/relatorio.qmd", output = "relatorios/relatorio.R")
+# fonte: tratar, tratar-biometria, tratar-agua, conferir-dados, exportar-dados
 ```
 
-Cada chunk vira um bloco marcado com o seu nome (`## ----tratar----`), os
-chunks com `eval: false` entram comentados, e o texto fica de fora. O `.R` é
-um subproduto: a fonte continua sendo o `.qmd`, e um novo `purl()` refaz o
-script quando o relatório mudar.
+Ela diz de quais trechos do script (os marcados com `## ---- nome ----`) o
+chunk é feito. A regra que sustenta tudo: **o código se edita no script,
+nunca no relatório.** Depois de editar, rode o chunk `atualizar`, logo no
+começo do `.qmd`: ele copia o código novo para os chunks, sem os comentários,
+e diz quais mudaram. Se alguém esquecer, o Render para na primeira linha com
+a mensagem "o código do relatório está diferente de analise.R em: ..." e o
+nome do chunk. Assim os dois nunca divergem em silêncio.
+
+Quem prefere estudar no script, estuda no script (o menu de seções do
+RStudio, Ctrl+Shift+O, lista os trechos). Quem prefere o caderno, lê o
+caderno e abre o script na seção de mesmo nome quando quer saber o porquê.
 
 ## A aparência das duas saídas
 
@@ -190,7 +216,7 @@ basta trocar a linha `csl:`). Qualquer outro se baixa do repositório de
 estilos CSL (github.com/citation-style-language/styles).
 
 No caderno HTML, as seções de Exploração e de Diagnóstico do modelo têm um
-chunk por verificação, e os comentários dentro de cada chunk dizem o que
+chunk por verificação, e o trecho correspondente em `R/analise.R` diz o que
 conferir e o que seria sinal de problema. É a lista de pressupostos da
 análise, no lugar onde ela se confere.
 
@@ -229,8 +255,10 @@ console. Três jeitos, do mais seguro para o mais arriscado:
   código da seleção rodou normalmente. Selecione só as linhas de código, ou
   use um dos dois primeiros jeitos.
 
-Uma ordem que ajuda: rode `pacotes`, depois `importar` e `tratar`. A partir
-daí, qualquer chunk de análise encontra os dados na memória.
+Uma ordem que ajuda: rode `pacotes`, depois `importar-e-conferir` e
+`preparo` (ou, com o cursor num chunk mais abaixo, **Ctrl+Alt+P** roda todos
+os anteriores). A partir daí, qualquer chunk de análise encontra os dados na
+memória. O mesmo vale no script: os trechos rodam em ordem, com Ctrl+Enter.
 
 ## Relação com a CatalyseR
 
@@ -253,13 +281,15 @@ nem de nenhum pacote fora do CRAN.
 2. Renomeie a pasta e o `.Rproj` com o nome do seu estudo. O `here()` não
    depende desses nomes; ele acha a raiz pelo `.Rproj`, qualquer que seja ele.
 3. Coloque a(s) planilha(s) em `dados/brutos/`.
-4. Adapte o `relatorio.qmd` chunk a chunk, na ordem. Em geral `importar` e
-   `tratar` mudam bastante, `explora-*` um pouco, e `analisar` é onde a
-   análise de fato acontece. O chunk `tratar` é onde você anota o que é cada
-   coluna (o `rename()` faz o "de-para" com a planilha) e por que cada valor
-   faltante está faltando.
-5. Reescreva o texto. Os números do texto vêm dos objetos (`` `r fmt(...)` ``),
-   nunca digitados à mão.
+4. Adapte o código em `R/analise.R`, trecho a trecho, na ordem. Em geral
+   `importar` e `tratar` mudam bastante, `explora-*` um pouco, e `analisar` é
+   onde a análise de fato acontece. O trecho `tratar` é onde você anota o que
+   é cada coluna (o `rename()` faz o "de-para" com a planilha) e por que cada
+   valor faltante está faltando. Trechos novos ganham um marcador
+   `## ---- nome ----` e entram na linha `# fonte:` do chunk que os mostra.
+5. Rode o chunk `atualizar` do `relatorio.qmd` e reescreva o texto. Os
+   números do texto vêm dos objetos (`` `r fmt(...)` ``), nunca digitados à
+   mão.
 6. Apague os arquivos de exemplo (`crescimento_tilapia.xlsx` e o conteúdo de
    `dados/processados/`).
 
@@ -274,16 +304,25 @@ repositório para o seu estudo, o que é uma boa ideia, mas não é obrigatório
 `"C:/Users/fulano/..."`. O `here()` acha a raiz do projeto pelo `.Rproj`, então
 o mesmo código roda em qualquer computador e em qualquer pasta.
 
-**O relatório faz, as funções definem.** O `relatorio.qmd` executa, de cima
-para baixo. O `R/funcoes.R` contém só `nome <- function(...) {...}` e é
-carregado uma vez, no chunk `pacotes`. Se um trecho foi copiado e colado
-duas vezes no relatório, ele vira função.
+**O script explica, o relatório faz, as funções definem.** O `R/analise.R`
+é onde o código se escreve e se comenta. O `relatorio.qmd` executa, de cima
+para baixo, o mesmo código sem os comentários (chunk `atualizar`). O
+`R/funcoes.R` contém só `nome <- function(...) {...}` e é carregado uma vez,
+no chunk `pacotes`. Se um trecho foi copiado e colado duas vezes, ele vira
+função.
 
 **Um chunk, uma etapa.** Cada chunk usa o que o anterior deixou na memória.
-Os nomes seguem a ordem da análise: `importar`, `tratar`, `explora-*`,
-`analisar`, e depois `tbl-*` e `fig-*` para o que vai ao Word. Quando o
-projeto tem mais de uma análise, `analisar` vira um chunk por análise:
-`analisar-ganho-peso`, `analisar-sobrevivencia`, e assim por diante.
+Os nomes seguem a ordem da análise, e um sufixo separa as etapas de uma mesma
+fase: `tratar-biometria`, `analisar-tukey`. Quando o projeto tem mais de uma
+análise, o nome dela entra logo depois do verbo: `analisar-sobrevivencia`,
+`analisar-sobrevivencia-tukey`.
+
+**Cada etapa escreve num objeto que ela não lê.** O `tratar` produz
+`biometria_nomes`; o `tratar-biometria` lê esse objeto e produz `biometria`.
+Parece detalhe, mas é o que permite reexecutar um chunk isolado sem estragar
+nada. Se uma etapa sobrescrevesse a própria entrada, rodá-la duas vezes
+trataria um dado já tratado: `as.numeric()` sobre um fator já criado, por
+exemplo, devolveria 1, 2, 3, 4 no lugar das densidades, e ninguém veria o erro.
 
 **O que o leitor vê e o que o pesquisador vê.** Chunks de trabalho (importar,
 tratar, analisar) rodam com `output: false`; os de exploração, com
@@ -309,9 +348,10 @@ de `funcoes.R` usa-se `pacote::funcao()`.
 todas as tabelas do Word, `flextable_ocean()`; todo número no texto passa por
 `fmt()` ou `formatar_p()`. Muda-se num lugar, muda em tudo.
 
-**Comentários dizem o porquê.** O código já diz o quê. `# converte para
-numérico` não ajuda; `# alguém digitou "168,3" com vírgula e a coluna virou
-texto` ajuda.
+**Comentários dizem o porquê, e moram no script.** O código já diz o quê.
+`# converte para numérico` não ajuda; `# alguém digitou "168,3" com vírgula e
+a coluna virou texto` ajuda. Eles ficam em `R/analise.R`; o relatório recebe
+só o código, e a única linha de comentário de cada chunk é a `# fonte:`.
 
 **Não salve o workspace.** Nas opções do RStudio (Tools → Global Options →
 General), desmarque *Restore .RData* e ponha *Save workspace* em *Never*. O
