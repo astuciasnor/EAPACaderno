@@ -84,18 +84,18 @@ E, fora dos dois, o pesquisador vê qualquer passo rodando o chunk no RStudio
 
 ## Por que um arquivo, duas saídas?
 
-Um aluno logo pergunta: por que existe só o `.qmd`, e como um arquivo gera um
+Um aluno logo pergunta: por que existe um `.qmd` só, e como um arquivo gera um
 Word e um HTML diferentes? A resposta cabe numa imagem: **é a mesma receita,
 servida de dois jeitos.** O Word é o prato pronto na mesa, para quem vai comer
 (o leitor: resultados e método, no formato de um artigo). O HTML é a cozinha
 aberta, para quem quer ver como se fez (o pesquisador: todo o código, a
 exploração, o diagnóstico). A receita é uma só; muda quem está olhando.
 
-O `.qmd` é a **fonte única**. O Word e o HTML não são dois arquivos que você
-mantém à mão; são duas impressões do mesmo documento, geradas no Render e
-descartáveis. Se você editasse um `.docx` e um `.html` separados, eles logo
-divergiriam, e ninguém saberia qual é o certo. Com um `.qmd` só, essa dúvida
-não existe.
+O script é a fonte do código; o `.qmd` reúne esse código e o texto, e é dele
+que saem as duas impressões. O Word e o HTML não são dois arquivos que você
+mantém à mão; são gerados no Render e descartáveis. Se você editasse um
+`.docx` e um `.html` separados, eles logo divergiriam, e ninguém saberia qual
+é o certo. Com um `.qmd` só, essa dúvida não existe.
 
 E o Quarto sabe para qual formato está gerando: durante o Render ele carrega um
 formato de cada vez e o documento se adapta sozinho, por três mecanismos que já
@@ -107,7 +107,9 @@ estão no arquivo:
 - **`content-visible when-format="html"`** — as seções de Exploração e de
   Diagnóstico existem só no HTML; no Word o Quarto as remove antes de gerar.
 - **`output: false` / `include: false`** — valem para os dois formatos, porque
-  são trabalho de bastidor em qualquer caso.
+  são trabalho de bastidor em qualquer caso. Os chunks de exploração e de
+  diagnóstico não levam nenhuma das duas: mostram tudo, mas só existem no
+  HTML, pela cerca do item anterior.
 
 Rodar chunk a chunk, aliás, não depende de formato nenhum: é o modo interativo
 do RStudio, e vale para o `.qmd` inteiro, esteja ele mirando Word ou HTML.
@@ -130,10 +132,14 @@ A ligação entre os dois é a primeira linha de cada chunk:
 Ela diz de quais trechos do script (os marcados com `## ---- nome ----`) o
 chunk é feito. A regra que sustenta tudo: **o código se edita no script,
 nunca no relatório.** Depois de editar, rode o chunk `atualizar`, logo no
-começo do `.qmd`: ele copia o código novo para os chunks, sem os comentários,
-e diz quais mudaram. Se alguém esquecer, o Render para na primeira linha com
-a mensagem "o código do relatório está diferente de analise.R em: ..." e o
-nome do chunk. Assim os dois nunca divergem em silêncio.
+começo do `.qmd`: ele copia o código novo para os chunks, sem as linhas de
+comentário (um comentário no fim de uma linha de código, como em
+`library(readxl)  # planilhas`, fica), e diz quais mudaram. Se alguém
+esquecer, o Render para na primeira linha com a mensagem "o código do
+relatório está diferente de analise.R em: ..." e o nome do chunk. Assim os
+dois nunca divergem em silêncio. Um chunk R escrito direto no `.qmd`, sem a
+linha `# fonte:`, fica fora dessa conferência; o Render avisa no log quais
+são, para que isso seja uma escolha e não um esquecimento.
 
 Quem prefere estudar no script, estuda no script (o menu de seções do
 RStudio, Ctrl+Shift+O, lista os trechos). Quem prefere o caderno, lê o
@@ -226,7 +232,9 @@ análise, no lugar onde ela se confere.
    Isso define o diretório de trabalho na raiz do projeto, que é o que o
    `here()` usa para montar os caminhos.
 2. Abra `relatorios/relatorio.qmd`. Em computador novo, rode o chunk
-   `instalar` uma vez.
+   `instalar` uma vez (Ctrl+Shift+Enter com o cursor nele): ele instala só o
+   que falta. Faça isso antes do primeiro Render, porque o relatório usa o
+   pacote `here` logo na primeira linha.
 3. Reinicie o R (Ctrl+Shift+F10) e clique em **Render**. Saem
    `relatorios/relatorio.docx` e `relatorios/relatorio.html` (a seta ao lado
    do botão Render escolhe um formato só; no Terminal,
@@ -325,9 +333,10 @@ trataria um dado já tratado: `as.numeric()` sobre um fator já criado, por
 exemplo, devolveria 1, 2, 3, 4 no lugar das densidades, e ninguém veria o erro.
 
 **O que o leitor vê e o que o pesquisador vê.** Chunks de trabalho (importar,
-tratar, analisar) rodam com `output: false`; os de exploração, com
-`include: false`. Nada disso entra no Word, mas tudo roda e tudo pode ser
-executado no RStudio. Só `tbl-*`, `fig-*` e o texto aparecem no relatório.
+preparo, análise) rodam com `output: false`; os de exploração e diagnóstico
+mostram tudo, mas ficam dentro da cerca `when-format="html"`. Nada disso
+entra no Word, mas tudo roda e tudo pode ser executado no RStudio. Só
+`tbl-*`, `fig-*` e o texto aparecem nos dois.
 
 **Dados brutos são intocáveis.** Erro na planilha se corrige com código no
 chunk `tratar`, com comentário dizendo o porquê. Assim fica registrado.

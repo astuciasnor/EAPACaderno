@@ -120,8 +120,6 @@ Editou o script? Rode o chunk `atualizar`; o Render confere sozinho.
 #| eval: false
 # fonte: instalar
 
-instalar_agora <- FALSE   # troque para TRUE se precisar instalar
-
 pacotes <- c(
   "here", "readxl", "readr", "dplyr", "tidyr", "ggplot2",
   "car", "multcompView", "flextable"
@@ -129,7 +127,7 @@ pacotes <- c(
 
 faltando <- pacotes[!pacotes %in% rownames(installed.packages())]
 
-if (instalar_agora && length(faltando)) {
+if (length(faltando)) {
   install.packages(faltando)
 }
 ```

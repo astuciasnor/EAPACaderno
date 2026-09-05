@@ -23,7 +23,8 @@
 # chunks. Se alguém esquecer, o Render para e avisa qual chunk está diferente.
 #
 # SEGURANÇA E REPRODUÇÃO
-# A instalação só roda se instalar_agora for TRUE, para não rodar com Source.
+# O trecho instalar só instala o que falta; dar Source no script inteiro
+# instala pacotes ausentes, o que é aceitável, mas leva tempo e pede internet.
 # A etapa exportar-dados grava (ou substitui) os CSV de dados/processados;
 # não altera a planilha bruta. Execute essa etapa conscientemente.
 # Não use Source como substituto de Render: o script não produz HTML/DOCX.
@@ -44,11 +45,10 @@
 
 ## ---- instalar ----
 # OBJETIVO: instalar somente os pacotes que ainda não estão disponíveis.
-# QUANDO USAR: uma única vez, ao preparar um computador novo.
-# NO RELATÓRIO: eval: false impede instalações durante o Render.
-# AQUI: troque instalar_agora para TRUE e rode as linhas abaixo.
-
-instalar_agora <- FALSE   # troque para TRUE se precisar instalar
+# QUANDO USAR: uma única vez, ao preparar um computador novo. Rode estas
+# linhas antes do primeiro Render: o relatório precisa do here já no início.
+# NO RELATÓRIO: eval: false impede instalações durante o Render; por isso o
+# chunk pode ser rodado à mão, inteiro, sem trocar nada.
 
 pacotes <- c(
   "here", "readxl", "readr", "dplyr", "tidyr", "ggplot2",
@@ -57,7 +57,7 @@ pacotes <- c(
 
 faltando <- pacotes[!pacotes %in% rownames(installed.packages())]
 
-if (instalar_agora && length(faltando)) {
+if (length(faltando)) {
   install.packages(faltando)
 }
 
