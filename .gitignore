@@ -9,6 +9,7 @@ Rplots.pdf
 .quarto/
 relatorios/.quarto/
 relatorios/*_files/
+Construcao_de Projetos/
 
 # Saídas do relatório: o .qmd é a fonte; um Render as refaz
 relatorios/relatorio.docx

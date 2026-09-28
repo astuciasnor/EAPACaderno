@@ -138,16 +138,18 @@ if (length(faltando)) {
 # fonte: pacotes
 
 library(here)
-library(readxl)         # Leitura de planilhas Excel
-library(readr)          # Exportação de CSV no padrão brasileiro
-library(dplyr)          # Manipulação de dados
-library(tidyr)          # Reorganização de dados
-library(ggplot2)        # Construção dos gráficos
-library(car)            # Teste de Levene
-library(multcompView)   # Letras dos grupos após o teste de Tukey
-library(flextable)      # Tabelas formatadas para o Word
+library(readxl)        # Leitura de planilhas Excel
+library(readr)         # Exportação de CSV no padrão brasileiro
+library(dplyr)         # Manipulação de dados
+library(tidyr)         # Reorganização de dados
+library(ggplot2)       # Construção dos gráficos
+library(car)           # Teste de Levene
+library(multcompView)  # Letras dos grupos após o teste de Tukey
+library(flextable)     # Tabelas formatadas para o Word
+
 
 source(here("R", "funcoes.R"))
+
 
 options(digits = 3)
 ```
@@ -171,13 +173,14 @@ Os dados foram registrados em planilha de campo (`dados/brutos/crescimento_tilap
 
 arquivo <- here("dados", "brutos", "crescimento_tilapia.xlsx")
 
+
 excel_sheets(arquivo)
 
 biometria_bruta <- read_excel(arquivo, sheet = "biometria", skip = 3)
 agua_bruta <- read_excel(arquivo, sheet = "agua")
 
-str(biometria_bruta)
-str(agua_bruta)
+glimpse(biometria_bruta)
+glimpse(agua_bruta)
 ```
 
 ## Preparo dos dados
@@ -231,6 +234,7 @@ agua <- agua_nomes |>
 
 glimpse(biometria)
 summary(biometria)
+
 
 count(biometria, densidade)
 

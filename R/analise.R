@@ -1,54 +1,38 @@
-# EAPACaderno — a análise, comentada ----
-#
-# Este script é o código do relatório (relatorios/relatorio.qmd) com as
-# explicações que o relatório não mostra. Aqui se aprende; lá se apresenta.
-# Dependências: dados/brutos/crescimento_tilapia.xlsx, R/funcoes.R e os
-# pacotes listados no trecho "instalar".
-#
-# COMO ESTUDAR
-# 1. Abra o projeto .Rproj e reinicie o R para começar com o ambiente limpo.
-# 2. Navegue pelos trechos abaixo (o menu de seções do RStudio, Ctrl+Shift+O,
-#    lista todos) e leia os comentários antes do código.
-# 3. Execute as linhas em ordem, com Ctrl+Enter; o resultado aparece no
-#    Console, no Plots ou no Viewer, como em qualquer script.
-#
-# COMO ESTE SCRIPT E O RELATÓRIO SE LIGAM
-# Cada trecho começa com um marcador "## ---- nome ----". No relatório, a
-# primeira linha de cada chunk diz de quais trechos ele é feito, por exemplo
-# "# fonte: tratar, tratar-biometria". O chunk recebe só as linhas de código
-# desses trechos; os comentários ficam aqui.
-#
-# A REGRA: o código se edita AQUI, nunca no relatório. Depois de editar,
-# rode o chunk "atualizar" do relatório, que copia o código novo para os
-# chunks. Se alguém esquecer, o Render para e avisa qual chunk está diferente.
-#
-# SEGURANÇA E REPRODUÇÃO
-# O trecho instalar só instala o que falta; dar Source no script inteiro
-# instala pacotes ausentes, o que é aceitável, mas leva tempo e pede internet.
-# A etapa exportar-dados grava (ou substitui) os CSV de dados/processados;
-# não altera a planilha bruta. Execute essa etapa conscientemente.
-# Não use Source como substituto de Render: o script não produz HTML/DOCX.
-# geom_jitter() usa aleatoriedade; posições horizontais podem variar entre
-# execuções. Não foi adicionada semente para não alterar o procedimento.
-#
-# Pequeno vocabulário ----
+# EAPACaderno — a análise, comentada ------------------------------------------|
+
+# COMO RODAR
+
+# Este roteiro é o passo seguinte à CatalyseR: o que lá você fez no mouse,
+# aqui você vê e roda como código. Reinicie o R (Session > Restart R) para
+# começar com o ambiente limpo e execute as linhas em ordem, com Ctrl+Enter;
+# o resultado aparece no Console, no Plots ou no Viewer. Ctrl+Shift+O abre o
+# menu de seções e lista todos os trechos, para você se localizar.
+
+# SCRIPT E RELATÓRIO
+
+# O código se edita no script, nunca no relatório. Depois de editar, rode o
+# chunk "atualizar" do relatório: ele copia o código, sem os comentários, para
+# os chunks; se algo ficar diferente, o Render para e avisa qual chunk está
+# defasado.
+
+# Pequeno vocabulário ---------------------------------------------------------|
+
 # <- guarda um resultado em um objeto.
 # |> passa o resultado anterior à próxima função.
 # mutate() cria ou transforma colunas; rename() troca seus nomes.
 # select() escolhe/ordena colunas; filter() escolhe linhas.
 # ~ especifica uma relação em modelos; $ acessa um componente nomeado.
 # NA indica ausência de dado, não zero.
+
 # As funções do projeto estão em R/funcoes.R: consulte suas definições
 # para aprofundar resumir_grupo(), fmt(), formatar_p() e flextable_ocean().
-#
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- instalar ----
-# OBJETIVO: instalar somente os pacotes que ainda não estão disponíveis.
-# QUANDO USAR: uma única vez, ao preparar um computador novo. Rode estas
-# linhas antes do primeiro Render: o relatório precisa do here já no início.
-# NO RELATÓRIO: eval: false impede instalações durante o Render; por isso o
-# chunk pode ser rodado à mão, inteiro, sem trocar nada.
+
+# Instala só os pacotes que ainda faltam. Rode uma única vez, ao preparar um
+# computador novo, antes do primeiro Render (o relatório precisa do here logo
+# no início). No relatório o chunk é eval: false, então nunca instala no Render.
 
 pacotes <- c(
   "here", "readxl", "readr", "dplyr", "tidyr", "ggplot2",
@@ -61,72 +45,78 @@ if (length(faltando)) {
   install.packages(faltando)
 }
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- pacotes ----
-# OBJETIVO: preparar o ambiente usado por todos os trechos seguintes.
-# PRODUZ: pacotes carregados, funções auxiliares e opções gerais do R.
-# DEPENDÊNCIA: deve ser executado antes de qualquer etapa da análise.
+
+# Carrega os pacotes, as funções próprias e as opções gerais do R. Rode antes
+# de qualquer etapa da análise.
 
 # here() monta os caminhos a partir da raiz do projeto (onde está o .Rproj),
-# permitindo que o mesmo arquivo funcione em computadores diferentes.
+# para o mesmo arquivo funcionar em computadores diferentes.
+
 library(here)
-library(readxl)         # Leitura de planilhas Excel
-library(readr)          # Exportação de CSV no padrão brasileiro
-library(dplyr)          # Manipulação de dados
-library(tidyr)          # Reorganização de dados
-library(ggplot2)        # Construção dos gráficos
-library(car)            # Teste de Levene
-library(multcompView)   # Letras dos grupos após o teste de Tukey
-library(flextable)      # Tabelas formatadas para o Word
+library(readxl)        # Leitura de planilhas Excel
+library(readr)         # Exportação de CSV no padrão brasileiro
+library(dplyr)         # Manipulação de dados
+library(tidyr)         # Reorganização de dados
+library(ggplot2)       # Construção dos gráficos
+library(car)           # Teste de Levene
+library(multcompView)  # Letras dos grupos após o teste de Tukey
+library(flextable)     # Tabelas formatadas para o Word
 
 # Funções próprias: resumos, formatação numérica, tema e tabelas.
+
 source(here("R", "funcoes.R"))
 
 # Três algarismos significativos deixam as saídas exploratórias mais limpas.
 # As tabelas finais usam fmt() e formatar_p() e não dependem desta opção.
+
 options(digits = 3)
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- importar ----
-# OBJETIVO: importar as planilhas exatamente como foram registradas em campo.
-# ENTRADA: dados/brutos/crescimento_tilapia.xlsx.
-# PRODUZ: biometria_bruta e agua_bruta.
-# PRÓXIMO PASSO: conferir-importacao verifica a estrutura desses objetos.
 
-# skip = 3 ignora as três primeiras linhas antes de ler o cabeçalho.
-# O valor foi preservado; confira esse início se o layout da planilha mudar.
+# Importa as planilhas exatamente como vieram do campo, sem tratar nada ainda.
+# Entra dados/brutos/crescimento_tilapia.xlsx; saem biometria_bruta e agua_bruta.
+
+# skip = 3 pula as três primeiras linhas antes de ler o cabeçalho. Confira esse
+# valor se o layout da planilha mudar.
+
 arquivo <- here("dados", "brutos", "crescimento_tilapia.xlsx")
 
 # Conferir as abas é uma medida simples contra erros no nome das planilhas.
+
 excel_sheets(arquivo)
 
 biometria_bruta <- read_excel(arquivo, sheet = "biometria", skip = 3)
 agua_bruta <- read_excel(arquivo, sheet = "agua")
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- conferir-importacao ----
-# OBJETIVO: conferir como o R interpretou as colunas importadas.
-# ENTRADA: biometria_bruta e agua_bruta, criadas no trecho importar.
-# POR QUE FAZER: tipos incorretos nesta etapa podem comprometer toda a análise.
 
-# "Peso final (g)" foi importado como texto (chr) porque existe um valor
-# escrito com vírgula. Os trechos de tratamento corrigem esse problema.
-str(biometria_bruta)
-str(agua_bruta)
+# Confere como o R interpretou cada coluna. Tipo errado aqui pode comprometer
+# toda a análise adiante.
 
+# "Peso final (g)" veio como texto (chr) porque existe um valor escrito com
+# vírgula; os trechos de tratamento corrigem isso.
+# glimpse() mostra uma coluna por linha, com o tipo ao lado do nome.
 
+glimpse(biometria_bruta)
+glimpse(agua_bruta)
+
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- tratar ----
-# ETAPA 1 — PADRONIZAR OS NOMES DAS COLUNAS
-# OBJETIVO: criar nomes curtos e seguros para usar no código.
-# ENTRADA: biometria_bruta e agua_bruta.
-# PRODUZ: biometria_nomes e agua_nomes, com nomes padronizados e nada mais.
-#
-# POR QUE UM OBJETO NOVO: cada etapa do preparo escreve num objeto que ela
-# mesma não lê. Assim, reexecutar um trecho isolado refaz o mesmo resultado,
+
+# ETAPA 1 — padronizar os nomes das colunas, criando nomes curtos e seguros
+# para usar no código.
+
+# Por que um objeto novo a cada etapa: cada passo escreve num objeto que ele
+# mesmo não lê. Assim, reexecutar um trecho isolado refaz o mesmo resultado,
 # em vez de tratar de novo um dado já tratado.
-#
-# O de-para explícito documenta exatamente qual coluna da planilha originou
-# cada variável da análise.
+
+# O de-para explícito registra qual coluna da planilha deu origem a cada
+# variável da análise.
+
 biometria_nomes <- biometria_bruta |>
   rename(
     tanque        = `Tanque`,
@@ -147,12 +137,11 @@ agua_nomes <- agua_bruta |>
     ph          = `pH`
   )
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- tratar-biometria ----
-# ETAPA 2 — CORRIGIR TIPOS E CRIAR VARIÁVEIS DA BIOMETRIA
-# OBJETIVO: transformar a planilha importada em uma base pronta para análise.
-# ENTRADA: biometria_nomes, criada no trecho tratar.
-# PRODUZ: biometria com tipos corretos, fator de tratamento e ganho de peso.
+
+# ETAPA 2 — corrigir os tipos e criar as variáveis da biometria (o fator de
+# tratamento e o ganho de peso), deixando a base pronta para a análise.
 
 biometria <- biometria_nomes |>
   mutate(
@@ -181,37 +170,35 @@ biometria <- biometria_nomes |>
     ganho_peso, comprimento, sobrevivencia, observacoes
   )
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- tratar-agua ----
-# ETAPA 3 — CORRIGIR OS TIPOS DA QUALIDADE DA ÁGUA
-# OBJETIVO: garantir que semana seja uma variável inteira.
-# ENTRADA: agua_nomes, criada no trecho tratar.
-# PRODUZ: agua pronta para os resumos semanais.
+
+# ETAPA 3 — corrigir os tipos da água (semana como número inteiro), deixando
+# agua pronta para os resumos semanais.
 
 agua <- agua_nomes |>
   mutate(semana = as.integer(semana))
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- conferir-dados ----
-# ETAPA 4 — CONFERIR A BIOMETRIA TRATADA
-# OBJETIVO: encontrar NA inesperado, valor absurdo ou grupo incompleto.
-# ENTRADA: biometria tratada; estes comandos não conferem a tabela agua.
-# PRODUZ: saídas de conferência; não cria um novo objeto analítico.
+
+# ETAPA 4 — conferir a biometria tratada, procurando NA inesperado, valor
+# absurdo ou grupo incompleto. Confere só a biometria, não a tabela agua.
 
 glimpse(biometria)
 summary(biometria)
 
 # O delineamento prevê seis tanques em cada densidade.
+
 count(biometria, densidade)
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- exportar-dados ----
-# ETAPA 5 — EXPORTAR CÓPIAS DAS BASES TRATADAS
-# OBJETIVO: disponibilizar os dados limpos para Excel ou outro programa.
-# ENTRADA: biometria e agua tratadas.
-# PRODUZ: biometria.csv e agua.csv em dados/processados/.
-#
-# Esses arquivos são entregas, não fontes da análise. O relatório continua
+
+# ETAPA 5 — exportar cópias das bases tratadas (biometria.csv e agua.csv em
+# dados/processados/), para abrir no Excel ou em outro programa.
+
+# Esses arquivos são entregas, não fontes da análise: o relatório continua
 # usando os objetos biometria e agua que estão na memória do R.
 
 dir.create(here("dados", "processados"), showWarnings = FALSE)
@@ -219,12 +206,11 @@ dir.create(here("dados", "processados"), showWarnings = FALSE)
 write_csv2(biometria, here("dados", "processados", "biometria.csv"))
 write_csv2(agua, here("dados", "processados", "agua.csv"))
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- explora-resumo ----
-# OBJETIVO: comparar rapidamente tamanho, centro e dispersão dos grupos.
-# ENTRADA: biometria tratada.
-# PRODUZ: dois resumos exploratórios, sem criar objetos permanentes.
-#
+
+# Compara rapidamente tamanho, centro e dispersão dos grupos.
+
 # O QUE CONFERIR:
 #   - são seis tanques por grupo; o n válido pode variar conforme a resposta;
 #     sobrevivencia possui NA. Confira como resumir_grupo() calcula n;
@@ -234,20 +220,21 @@ write_csv2(agua, here("dados", "processados", "agua.csv"))
 resumir_grupo(biometria, ganho_peso, densidade)
 resumir_grupo(biometria, sobrevivencia, densidade)
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- explora-ganho ----
-# OBJETIVO: visualizar distribuição, dispersão e possíveis valores extremos.
-# ENTRADA: biometria tratada.
-# PRODUZ: boxplot exploratório com os tanques individuais.
-#
+
+# Visualiza distribuição, dispersão e possíveis valores extremos, num boxplot
+# com os tanques individuais.
+
 # O QUE CONFERIR:
 #   - caixas de tamanho parecido (variâncias homogêneas);
 #   - nenhum ponto muito fora da sua caixa (possível erro de digitação);
 #   - a mediana sugere uma tendência? A ANOVA compara médias, não medianas.
 #     A aparência do boxplot, sozinha, não determina a significância.
-#
+
 # O boxplot resume a forma da distribuição; os pontos preservam a visão de
 # quantos tanques existem e onde cada observação se encontra.
+
 ggplot(biometria, aes(x = densidade, y = ganho_peso)) +
   geom_boxplot(width = 0.5, outlier.shape = NA, colour = "grey50") +
   geom_jitter(width = 0.1, height = 0, size = 2, alpha = 0.7) +
@@ -258,22 +245,23 @@ ggplot(biometria, aes(x = densidade, y = ganho_peso)) +
   ) +
   tema_projeto()
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- explora-peso-comprimento ----
-# OBJETIVO: verificar a coerência biológica entre peso e comprimento.
-# ENTRADA: biometria tratada.
-# PRODUZ: com_comprimento e um gráfico exploratório de dispersão.
-#
+
+# Verifica a coerência biológica entre peso e comprimento.
+
 # O QUE CONFERIR:
 #   - os pontos formam uma nuvem crescente e apertada?
 #   - algum ponto isolado (peso alto com comprimento baixo, ou o contrário)?
 #     Se houver, volte à planilha e confira o tanque.
-#
+
 # A relação serve como verificação de plausibilidade e ajuda a encontrar
 # possíveis erros de digitação.
+
 # O T14 não tem comprimento (ver a seção tratar-biometria). Preferimos tirá-lo de
 # propósito e dizer quantos ficaram de fora, em vez de deixar o ggplot
 # descartar em silêncio.
+
 com_comprimento <- filter(biometria, !is.na(comprimento))
 
 message(
@@ -291,19 +279,19 @@ ggplot(com_comprimento, aes(x = comprimento, y = peso_final)) +
   ) +
   tema_projeto()
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- explora-agua ----
-# OBJETIVO: verificar se a qualidade da água foi semelhante entre tratamentos.
-# ENTRADA: agua e biometria tratadas.
-# PRODUZ: agua_resumo e um gráfico com as médias semanais.
-#
+
+# Verifica se a qualidade da água foi semelhante entre os tratamentos.
+
 # O QUE CONFERIR:
 #   - as linhas dos quatro tratamentos andam juntas em cada painel?
 #   - alguma semana com queda brusca (falha de aeração, chuva)?
 #   - oxigênio abaixo de 3 mg/L em algum grupo é sinal de alerta.
-#
+
 # A tabela "agua" está no formato longo (uma linha por tanque × semana).
 # Juntamos a densidade de cada tanque e olhamos a média semanal por tratamento.
+
 agua_resumo <- agua |>
   left_join(select(biometria, tanque, densidade), by = "tanque") |>
   pivot_longer(
@@ -327,30 +315,30 @@ ggplot(agua_resumo, aes(x = semana, y = media, colour = densidade)) +
   ) +
   tema_projeto()
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- analisar ----
-# ETAPA 1 — AJUSTAR A ANOVA
-# OBJETIVO: testar se o ganho médio de peso difere entre as densidades.
-# ENTRADA: biometria tratada; densidade como fator e ganho_peso como resposta.
-# PRODUZ: modelo_ganho e tabela_anova.
-#
+
+# ETAPA 1 — ajustar a ANOVA para testar se o ganho médio de peso difere entre
+# as densidades (densidade como fator, ganho_peso como resposta).
+
 # A ANOVA responde à pergunta global: existe pelo menos uma média diferente?
 # Ela ainda não informa quais densidades diferem entre si.
+
 modelo_ganho <- aov(ganho_peso ~ densidade, data = biometria)
 tabela_anova <- anova(modelo_ganho)
 tabela_anova
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- analisar-pressupostos ----
-# ETAPA 2 — VERIFICAR OS PRESSUPOSTOS DA ANOVA
-# OBJETIVO: avaliar normalidade dos resíduos e homogeneidade das variâncias.
-# ENTRADA: modelo_ganho e biometria.
-# PRODUZ: teste_normalidade e teste_levene.
-#
+
+# ETAPA 2 — verificar os pressupostos da ANOVA: normalidade dos resíduos e
+# homogeneidade das variâncias.
+
 # Em ambos os testes, p > 0,05 significa que não há evidência suficiente
 # para rejeitar o pressuposto avaliado. Os gráficos de diagnóstico completam
 # essa verificação na seção exclusiva do caderno HTML.
 # Não rejeitar um pressuposto não é comprovar que ele seja verdadeiro.
+
 # Shapiro usa resíduos; Levene compara a dispersão da resposta entre grupos.
 
 teste_normalidade <- shapiro.test(residuals(modelo_ganho))
@@ -359,17 +347,17 @@ teste_levene <- leveneTest(ganho_peso ~ densidade, data = biometria)
 teste_normalidade
 teste_levene
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- analisar-tukey ----
-# ETAPA 3 — COMPARAR AS MÉDIAS PELO TESTE DE TUKEY
-# OBJETIVO: descobrir quais pares de densidade apresentam médias diferentes.
-# ENTRADA: modelo_ganho e biometria.
-# PRODUZ: tukey_ganho, letras e resumo_ganho.
-#
+
+# ETAPA 3 — comparar as médias pelo teste de Tukey, para descobrir quais pares
+# de densidade diferem entre si.
+
 # Uma letra compartilhada indica que não se detectou diferença a 5 %;
 # isso não demonstra equivalência entre médias. Os p-valores são ajustados.
-# O código original calcula Tukey sem condicional: ao reutilizar este roteiro,
-# confira antes o resultado global e a adequação da análise.
+
+# Aqui o Tukey é calculado direto. Ao reaproveitar este roteiro, confira antes
+# o resultado global da ANOVA e a adequação da análise.
 
 tukey_ganho <- TukeyHSD(modelo_ganho, "densidade")
 tukey_ganho
@@ -382,26 +370,24 @@ resumo_ganho <- resumir_grupo(biometria, ganho_peso, densidade) |>
 
 resumo_ganho
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- analisar-tendencia ----
-# ETAPA 4 — RESUMIR A TENDÊNCIA LINEAR
-# OBJETIVO: estimar quanto o ganho muda quando a densidade aumenta.
-# ENTRADA: biometria, usando densidade_num como variável quantitativa.
-# PRODUZ: modelo_tendencia.
-#
+
+# ETAPA 4 — resumir a tendência linear, estimando quanto o ganho muda quando a
+# densidade aumenta (densidade_num como variável quantitativa).
+
 # A ANOVA compara grupos; esta regressão resume a direção e a intensidade
 # média da relação em um único coeficiente.
 
 modelo_tendencia <- lm(ganho_peso ~ densidade_num, data = biometria)
 summary(modelo_tendencia)
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- preparar-resultados-texto ----
-# ETAPA 5 — PREPARAR OS VALORES USADOS NO TEXTO DINÂMICO
-# OBJETIVO: extrair uma única vez os números citados nos Resultados.
-# ENTRADA: tabela_anova, testes de pressupostos e modelo_tendencia.
-# PRODUZ: valores escalares inseridos no texto por expressões `r ...`.
-#
+
+# ETAPA 5 — extrair, uma única vez, os números citados no texto dos Resultados;
+# eles entram depois por expressões `r ...` no relatório.
+
 # fmt() e formatar_p(), definidas em R/funcoes.R, aplicam vírgula decimal,
 # número de casas e a escrita convencional dos valores de p.
 
@@ -416,54 +402,58 @@ coef_tend <- abs(coef(modelo_tendencia)[2])
 # coef_tend usa abs(): guarda a magnitude, não o sinal da inclinação.
 # A frase "caiu" no QMD é específica deste exemplo; se os dados mudarem,
 # confira o sinal de coef(modelo_tendencia)[2] e revise a interpretação.
+
 # Textos narrativos não se atualizam automaticamente como os números inline.
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- diagnostico-variancia ----
-# OBJETIVO: avaliar visualmente constância da variância e forma dos resíduos.
-# ENTRADA: modelo_ganho.
-# PRODUZ: gráfico de resíduos versus valores ajustados.
-#
+
+# Avalia visualmente a constância da variância e a forma dos resíduos
+# (resíduos versus valores ajustados).
+
 # O QUE CONFERIR:
 #   - a nuvem de pontos tem a mesma altura em todos os grupos (colunas);
 #   - a linha vermelha fica perto de zero, sem curva;
 #   - um funil (dispersão crescendo com a média) é sinal de variância
 #     heterogênea: investigue sua origem e a adequação de alternativas,
 #     como ANOVA de Welch. Kruskal-Wallis não é uma correção automática.
+
 plot(modelo_ganho, which = 1)
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- diagnostico-normalidade ----
-# OBJETIVO: avaliar visualmente a normalidade dos resíduos.
-# ENTRADA: modelo_ganho.
-# PRODUZ: gráfico quantil-quantil dos resíduos.
-#
+
+# Avalia visualmente a normalidade dos resíduos (gráfico quantil-quantil).
+
 # O QUE CONFERIR:
 #   - os pontos seguem a linha pontilhada, com pequenos desvios nas pontas;
 #   - um "S" ou uma cauda que se descola é sinal de assimetria ou de
 #     valor extremo. Com n pequeno (aqui, 24), pequenos desvios são normais.
+
 plot(modelo_ganho, which = 2)
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- diagnostico-influencia ----
-# OBJETIVO: identificar observações que podem influenciar a conclusão.
-# ENTRADA: modelo_ganho.
-# PRODUZ: gráfico dos resíduos padronizados por nível do fator.
-#
+
+# Identifica observações que podem influenciar a conclusão (resíduos
+# padronizados por nível do fator).
+
 # O QUE CONFERIR:
 #   - a maioria dos pontos entre -2 e 2;
 #   - um ponto além de 3 merece uma volta à planilha: erro de digitação ou
 #     um tanque que passou por algo diferente (ver a coluna observacoes).
-#
+
 # Os números junto aos pontos correspondem às linhas da base e permitem
 # localizar cada observação suspeita.
+
 plot(modelo_ganho, which = 5)
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- tbl-resumo ----
-# OBJETIVO: apresentar estatísticas descritivas e grupos do teste de Tukey.
-# ENTRADA: resumo_ganho, criado no trecho analisar-tukey.
-# PRODUZ: tabela formatada para as saídas HTML e DOCX.
+
+# Apresenta as estatísticas descritivas e os grupos do teste de Tukey, numa
+# tabela formatada para as saídas HTML e DOCX.
+
 resumo_ganho |>
   mutate(
     `IC 95 %` = paste0(fmt(ic_inf, 1), " a ", fmt(ic_sup, 1)),
@@ -480,11 +470,11 @@ resumo_ganho |>
   ) |>
   flextable_ocean()
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- tbl-anova ----
-# OBJETIVO: converter a saída da ANOVA em uma tabela de artigo científico.
-# ENTRADA: tabela_anova, criada no trecho analisar.
-# PRODUZ: tabela formatada para as saídas HTML e DOCX.
+
+# Converte a saída da ANOVA numa tabela de artigo científico (HTML e DOCX).
+
 tabela_anova |>
   as.data.frame() |>
   mutate(
@@ -500,17 +490,18 @@ tabela_anova |>
   mutate(across(c(F, p), ~ ifelse(is.na(.x) | .x == "-", "", .x))) |>
   flextable_ocean()
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- fig-ganho ----
-# OBJETIVO: reunir dados individuais, médias, incerteza e teste de Tukey.
-# ENTRADAS: biometria e resumo_ganho.
-# PRODUZ: figura principal da comparação entre densidades.
-#
+
+# Figura principal da comparação entre densidades, reunindo dados individuais,
+# médias, incerteza e o teste de Tukey.
+
 # LEITURA DAS CAMADAS DO GRÁFICO:
 #   1. geom_jitter()   -> cada ponto representa um tanque-rede;
 #   2. geom_errorbar() -> intervalo de confiança de 95 % da média;
 #   3. geom_point()    -> média de cada densidade;
 #   4. geom_text()     -> letras do teste de Tukey.
+
 ggplot() +
   geom_jitter(
     data = biometria,
@@ -548,14 +539,15 @@ ggplot() +
   ) +
   tema_projeto()
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- fig-tendencia ----
-# OBJETIVO: mostrar a direção e a intensidade da tendência com a densidade.
-# ENTRADA: biometria tratada.
-# PRODUZ: dispersão dos tanques com reta e IC 95 % da regressão linear.
-#
+
+# Mostra a direção e a intensidade da tendência com a densidade: dispersão dos
+# tanques com reta e IC 95 % da regressão linear.
+
 # geom_smooth() estima a reta a partir do mesmo modelo linear resumido em
 # analisar-tendencia; geom_point() mantém visíveis as observações originais.
+
 ggplot(biometria, aes(x = densidade_num, y = ganho_peso)) +
   geom_smooth(method = "lm", colour = "grey30", fill = "grey85", linewidth = 0.7) +
   geom_point(aes(colour = densidade), size = 2, alpha = 0.7) +
@@ -567,6 +559,7 @@ ggplot(biometria, aes(x = densidade_num, y = ganho_peso)) +
   ) +
   tema_projeto()
 
-
+# ──────────────────────────────────────────────────────────────────────-------|
 ## ---- fim-do-codigo ----
+
 # (nada além daqui entra no relatório)

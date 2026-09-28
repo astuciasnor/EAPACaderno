@@ -111,8 +111,12 @@ tema_projeto <- function(tamanho_base = 12) {
 #
 cores_tratamento <- c("#0F3B5F",   # azul-marinho (NAVY)
                       "#2E7D8F",   # azul-petróleo (TEAL)
+                      "#62B6B7",   # verde-água (SEAFOAM)
                       "#E89B3C",   # âmbar (AMBER)
-                      "#E76F51")   # coral (CORAL)
+                      "#E76F51",   # coral (CORAL)
+                      "#6A4C93",   # roxo
+                      "#1B998B",   # verde-esmeralda
+                      "#B23A48")   # vinho
 
 
 

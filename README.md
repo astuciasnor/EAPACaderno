@@ -1,10 +1,41 @@
 # EAPACaderno
 
+## Dois exemplos para aprender progressivamente
+
+- [Descritiva do barbo](descritiva-barbo/README.md): primeiro contato com a
+  organização de um Projeto R, usando uma variável, uma tabela e um histograma.
+  Script curto e dois QMDs com textos enxutos.
+- [Regressão do barbo](morfometria-barbo/README.md): referência mais completa
+  de roteiro didático, com modelo, diagnósticos e interpretação.
+
+Esses exemplos usam um script analítico e dois documentos separados (HTML e
+Word) e orientam a evolução dos Projetos R exportados pela CatalyseR. A migração
+do gerador ainda está pendente. O projeto de ANOVA na raiz mantém seu fluxo
+próprio de sincronização, descrito a seguir.
+
+## Projeto original da raiz
+
 O caderno de análise do ecossistema EAPA: o projeto-modelo de análise de dados
 em R, feito para ser copiado no começo de cada análise nova. A ideia é simples:
 uma planilha entra, um documento faz tudo, um relatório em Word sai. Nada de
 framework; só pastas com nomes claros, o pacote `here`, um documento Quarto
 e um pouco de disciplina.
+
+## Análise e relatório
+
+O script `R/analise.R` é o código do relatório (`relatorios/relatorio.qmd`)
+com as explicações que o relatório não mostra. Aqui se aprende; lá se apresenta.
+O `R/funcoes.R` define as funções auxiliares.
+O `relatorios/relatorio.qmd` reúne o texto científico e o código que gera
+os resultados, produzindo o Word e o HTML.
+
+O código é editado em `R/analise.R`. Depois, `atualizar_codigo()` copia os
+trechos para o relatório; `conferir_codigo()` verifica a sincronização no
+Render. Esse é o fluxo adotado pelo projeto.
+
+Texto e código no mesmo documento, na ordem em que a análise é pensada:
+esse jeito de programar chama-se ***Programação Literária***. Aqui, essa
+combinação acontece em `relatorios/relatorio.qmd`.
 
 ## A estrutura
 
@@ -19,7 +50,7 @@ EAPACaderno/
 │   └── processados/               a base tratada em .csv, gerada pelo relatório, para o Excel
 │
 ├── R/
-│   ├── analise.R                  O CÓDIGO, comentado passo a passo: é aqui que se edita
+│   ├── analise.R                  código comentado: é aqui que se edita a análise
 │   └── funcoes.R                  só DEFINIÇÕES de funções próprias (não roda nada)
 │
 ├── imagens/                       fotos, esquemas e mapas que NÃO vêm do código (começa vazia)
