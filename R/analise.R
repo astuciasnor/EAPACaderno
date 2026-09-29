@@ -1,565 +1,689 @@
-# EAPACaderno — a análise, comentada ------------------------------------------|
+# PESO_G ENTRE GRUPOS DE RACAO — ROTEIRO DE ANÁLISE
+# x========================================================================x
+# Pergunta: a média de Peso (g) difere entre os grupos de Tipo de Ração?
+#
+# COMO ESTUDAR
+# Abra o arquivo .Rproj e execute as seções na ordem, de cima para baixo.
+# No RStudio, Ctrl+Enter executa a linha ou a seleção. Digite o nome de um
+# objeto no console para examiná-lo, por exemplo: tabela_anova.
+# O sumário do editor (Ctrl+Shift+O) permite navegar entre as seções numeradas.
+#
+# MAPA DO ROTEIRO
+#  1–3. Preparar o ambiente, ler a planilha e montar a base da ANOVA.
+#  4–6. Explorar os grupos, ajustar o modelo e examinar os pressupostos.
+#    7. Comparar os grupos dois a dois (Tukey) e medir o tamanho do efeito.
+#  8–9. Preparar as tabelas e construir os gráficos.
+#   10. Preparar os textos que serão usados nos relatórios.
+# 11–12. Salvar cópias dos resultados e registrar as versões utilizadas.
+#
+# OBJETOS QUE OS RELATÓRIOS VÃO USAR
+# base_anova               dados e identificadores das observações analisadas
+# modelo_anova             modelo ajustado por aov()
+# tabela_anova             a tabela da ANOVA, sem arredondamento
+# tabela_resumo            n, média, DP, EP, IC e letras de Tukey por grupo
+# tabela_resumo_exibir     versão formatada da tabela-resumo
+# grafico_barras           figura principal, pronta para exibir ou salvar
+# texto_anova              frase com o resultado calculado
+#
+# Cada QMD executa este script numa sessão nova e usa os objetos em memória.
+# Os CSVs e PNGs salvos são cópias para consulta; não alimentam os QMDs.
+# Edite os cálculos aqui e a argumentação científica nos documentos Quarto.
+# Instale os pacotes uma única vez conforme o README, antes de executar.
 
-# COMO RODAR
+# 1. Preparar o ambiente ---------------------------------------------------
+library(here)
+# Declara: "este arquivo está em R/analise.R, dentro do meu projeto".
+# Assim, here() monta caminhos a partir da raiz do projeto, acima da pasta R/.
+# Não muda a pasta de trabalho como setwd(). Abra o projeto antes de rodar.
+here::i_am("R/analise.R")
+# Bibliotecas da leitura, do preparo e dos gráficos: só o que este
+# projeto usa. O README traz a linha de instalação completa.
+library(car)
+library(dplyr)
+library(effectsize)
+library(ggplot2)
+library(lubridate)
+library(multcompView)
+library(readxl)
+library(broom)
+library(flextable)
+library(stringr)
+library(pwr)
+# Dois pacotes do ecossistema EAPA, hospedados no GitHub (não estão no CRAN).
+# EAPADados: dados de contexto da pesca e da aquicultura do curso.
+if (!requireNamespace("EAPADados", quietly = TRUE)) {
+  stop(
+    "Este projeto usa o pacote EAPADados, que não está instalado.",
+    " Instale uma vez, no console: remotes::install_github('astuciasnor/EAPADados')",
+    call. = FALSE
+  )
+}
+library(EAPADados)
+# catalyser: catalyser_conferir_base(), a conferência das bases na seção 3.
+if (!requireNamespace("catalyser", quietly = TRUE)) {
+  stop(
+    "Este projeto usa o pacote catalyser, que não está instalado.",
+    " Instale uma vez, no console: remotes::install_github('astuciasnor/catalyser')",
+    call. = FALSE
+  )
+}
+library(catalyser)
+# As funções abaixo cuidam da apresentação; os cálculos continuam neste script.
+source(here::here("R", "funcoes.R"), encoding = "UTF-8")
 
-# Este roteiro é o passo seguinte à CatalyseR: o que lá você fez no mouse,
-# aqui você vê e roda como código. Reinicie o R (Session > Restart R) para
-# começar com o ambiente limpo e execute as linhas em ordem, com Ctrl+Enter;
-# o resultado aparece no Console, no Plots ou no Viewer. Ctrl+Shift+O abre o
-# menu de seções e lista todos os trechos, para você se localizar.
+# 2. Definir as escolhas e ler os dados ------------------------------------
+# Nomes das colunas usadas na análise; devem existir na base preparada.
+variavel_resposta <- "peso_g"
+variavel_fator <- "racao"
+# Os rótulos são textos de apresentação: alterá-los não renomeia as colunas.
+rotulo_resposta <- "Peso (g)"
+rotulo_fator <- "Tipo de Ração"
+nivel_confianca <- 0.95
+alfa <- 1 - nivel_confianca
+ic_percentual <- fmt(100 * nivel_confianca, 0)
+titulo_grafico <- ""
+# Paleta Ocean, a mesma do livro. Uma cor para cada grupo.
+cores_tratamento <- c("#0F3B5F", "#2E7D8F", "#62B6B7", "#E89B3C", "#E76F51",
+                      "#8FB8C8", "#1F5673", "#B5654A")
 
-# SCRIPT E RELATÓRIO
-
-# O código se edita no script, nunca no relatório. Depois de editar, rode o
-# chunk "atualizar" do relatório: ele copia o código, sem os comentários, para
-# os chunks; se algo ficar diferente, o Render para e avisa qual chunk está
-# defasado.
-
-# Pequeno vocabulário ---------------------------------------------------------|
-
-# <- guarda um resultado em um objeto.
-# |> passa o resultado anterior à próxima função.
-# mutate() cria ou transforma colunas; rename() troca seus nomes.
-# select() escolhe/ordena colunas; filter() escolhe linhas.
-# ~ especifica uma relação em modelos; $ acessa um componente nomeado.
-# NA indica ausência de dado, não zero.
-
-# As funções do projeto estão em R/funcoes.R: consulte suas definições
-# para aprofundar resumir_grupo(), fmt(), formatar_p() e flextable_ocean().
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- instalar ----
-
-# Instala só os pacotes que ainda faltam. Rode uma única vez, ao preparar um
-# computador novo, antes do primeiro Render (o relatório precisa do here logo
-# no início). No relatório o chunk é eval: false, então nunca instala no Render.
-
-pacotes <- c(
-  "here", "readxl", "readr", "dplyr", "tidyr", "ggplot2",
-  "car", "multcompView", "flextable"
-)
-
-faltando <- pacotes[!pacotes %in% rownames(installed.packages())]
-
-if (length(faltando)) {
-  install.packages(faltando)
+# Estas pastas guardam produtos regeneráveis. Os dados brutos ficam intactos.
+# O laço cria cada pasta dentro do projeto, caso ela ainda não exista.
+# recursive = TRUE cria também as pastas intermediárias, como saida/.
+# showWarnings = FALSE silencia o aviso de pasta já existente;
+# dir.create() não apaga arquivos que estejam nessas pastas.
+for (pasta in c(
+  "dados/processados",
+  "saida/tabelas",
+  "saida/figuras",
+  "saida/relatorios"
+)) {
+  dir.create(
+    here::here(pasta),
+    showWarnings = FALSE,
+    recursive = TRUE
+  )
 }
 
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- pacotes ----
+# A planilha que viajou no projeto entra aqui, sem nenhuma alteração.
+# Sai dados_brutos, a tabela lida.
+# Entrada: dados/brutos/isoproteica_bagre.xlsx, com somente a aba utilizada.
+# Arquivo de origem: datasets-projetos.xlsx.
 
-# Carrega os pacotes, as funções próprias e as opções gerais do R. Rode antes
-# de qualquer etapa da análise.
+# Se quiser rodar o projeto com outra planilha de mesma estrutura, troque
+# o caminho e a aba abaixo. A planilha é somente-leitura: nunca a edite.
+caminho_planilha <- here("dados", "brutos", "isoproteica_bagre.xlsx")
+aba_planilha <- "isoproteica_bagre"
 
-# here() monta os caminhos a partir da raiz do projeto (onde está o .Rproj),
-# para o mesmo arquivo funcionar em computadores diferentes.
+dados_brutos <- as.data.frame(read_excel(caminho_planilha, sheet = aba_planilha))
 
-library(here)
-library(readxl)        # Leitura de planilhas Excel
-library(readr)         # Exportação de CSV no padrão brasileiro
-library(dplyr)         # Manipulação de dados
-library(tidyr)         # Reorganização de dados
-library(ggplot2)       # Construção dos gráficos
-library(car)           # Teste de Levene
-library(multcompView)  # Letras dos grupos após o teste de Tukey
-library(flextable)     # Tabelas formatadas para o Word
+# Primeira olhada: quantas linhas e colunas vieram, e o tipo de cada coluna.
+# O QUE CONFERIR: números lidos como texto (chr) são o sinal de problema
+# mais comum, e vêm de vírgula decimal ou de um traço no lugar do vazio.
+str(dados_brutos)
 
-# Funções próprias: resumos, formatação numérica, tema e tabelas.
 
-source(here("R", "funcoes.R"))
+# 3. Preparar a base da ANOVA ----------------------------------------------
+# Quatro etapas, um objeto por etapa: reconstruir o preparo, conferir com a
+# fotografia que acompanha o projeto, adotar a base e montar a base da análise.
+# Sai dados_da_analise, a base desta análise.
 
-# Três algarismos significativos deixam as saídas exploratórias mais limpas.
-# As tabelas finais usam fmt() e formatar_p() e não dependem desta opção.
+# 3.1 Reconstruir. A receita registrada, aplicada à planilha bruta: cada
+# operação é uma linha do encadeamento, lida de cima para baixo.
+# (Sem preparo adicional, a receita é a própria planilha.)
+base_reconstruida <- dados_brutos
 
-options(digits = 3)
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- importar ----
-
-# Importa as planilhas exatamente como vieram do campo, sem tratar nada ainda.
-# Entra dados/brutos/crescimento_tilapia.xlsx; saem biometria_bruta e agua_bruta.
-
-# skip = 3 pula as três primeiras linhas antes de ler o cabeçalho. Confira esse
-# valor se o layout da planilha mudar.
-
-arquivo <- here("dados", "brutos", "crescimento_tilapia.xlsx")
-
-# Conferir as abas é uma medida simples contra erros no nome das planilhas.
-
-excel_sheets(arquivo)
-
-biometria_bruta <- read_excel(arquivo, sheet = "biometria", skip = 3)
-agua_bruta <- read_excel(arquivo, sheet = "agua")
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- conferir-importacao ----
-
-# Confere como o R interpretou cada coluna. Tipo errado aqui pode comprometer
-# toda a análise adiante.
-
-# "Peso final (g)" veio como texto (chr) porque existe um valor escrito com
-# vírgula; os trechos de tratamento corrigem isso.
-# glimpse() mostra uma coluna por linha, com o tipo ao lado do nome.
-
-glimpse(biometria_bruta)
-glimpse(agua_bruta)
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- tratar ----
-
-# ETAPA 1 — padronizar os nomes das colunas, criando nomes curtos e seguros
-# para usar no código.
-
-# Por que um objeto novo a cada etapa: cada passo escreve num objeto que ele
-# mesmo não lê. Assim, reexecutar um trecho isolado refaz o mesmo resultado,
-# em vez de tratar de novo um dado já tratado.
-
-# O de-para explícito registra qual coluna da planilha deu origem a cada
-# variável da análise.
-
-biometria_nomes <- biometria_bruta |>
-  rename(
-    tanque        = `Tanque`,
-    densidade     = `Densidade (peixes/m³)`,
-    peso_inicial  = `Peso inicial (g)`,
-    peso_final    = `Peso final (g)`,
-    comprimento   = `Comprimento final (cm)`,
-    sobrevivencia = `Sobrevivência (%)`,
-    observacoes   = `Observações`
-  )
-
-agua_nomes <- agua_bruta |>
-  rename(
-    tanque      = `Tanque`,
-    semana      = `Semana`,
-    temperatura = `Temperatura (°C)`,
-    oxigenio    = `Oxigênio dissolvido (mg/L)`,
-    ph          = `pH`
-  )
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- tratar-biometria ----
-
-# ETAPA 2 — corrigir os tipos e criar as variáveis da biometria (o fator de
-# tratamento e o ganho de peso), deixando a base pronta para a análise.
-
-biometria <- biometria_nomes |>
-  mutate(
-    # Um valor como "168,3" fez a coluna inteira ser importada como texto.
-    # Primeiro trocamos a vírgula por ponto; depois convertemos para número.
-    peso_final = as.numeric(sub(",", ".", peso_final, fixed = TRUE)),
-
-    # O sinal "-" usado na planilha vira NA, o padrão do R para dado ausente.
-    # Os dois NA da base têm motivo conhecido, e vale registrá-lo aqui:
-    # T14 sem comprimento (ictiômetro quebrado) e T19 sem sobrevivência
-    # (contagem não realizada). Ver também a aba "leia-me" da planilha.
-    sobrevivencia = as.numeric(na_if(sobrevivencia, "-")),
-    comprimento = as.numeric(comprimento),
-
-    # Mantemos duas versões da densidade porque cada análise exige uma forma:
-    # fator para a ANOVA e número para a regressão de tendência.
-    densidade_num = as.numeric(densidade),
-    densidade = factor(densidade, levels = c(50, 100, 150, 200)),
-
-    # Variável-resposta principal do estudo.
-    ganho_peso = peso_final - peso_inicial
-  ) |>
-  # A ordem final facilita a leitura: identificação, tratamento e respostas.
-  select(
-    tanque, densidade, densidade_num, peso_inicial, peso_final,
-    ganho_peso, comprimento, sobrevivencia, observacoes
-  )
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- tratar-agua ----
-
-# ETAPA 3 — corrigir os tipos da água (semana como número inteiro), deixando
-# agua pronta para os resumos semanais.
-
-agua <- agua_nomes |>
-  mutate(semana = as.integer(semana))
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- conferir-dados ----
-
-# ETAPA 4 — conferir a biometria tratada, procurando NA inesperado, valor
-# absurdo ou grupo incompleto. Confere só a biometria, não a tabela agua.
-
-glimpse(biometria)
-summary(biometria)
-
-# O delineamento prevê seis tanques em cada densidade.
-
-count(biometria, densidade)
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- exportar-dados ----
-
-# ETAPA 5 — exportar cópias das bases tratadas (biometria.csv e agua.csv em
-# dados/processados/), para abrir no Excel ou em outro programa.
-
-# Esses arquivos são entregas, não fontes da análise: o relatório continua
-# usando os objetos biometria e agua que estão na memória do R.
-
-dir.create(here("dados", "processados"), showWarnings = FALSE)
-
-write_csv2(biometria, here("dados", "processados", "biometria.csv"))
-write_csv2(agua, here("dados", "processados", "agua.csv"))
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- explora-resumo ----
-
-# Compara rapidamente tamanho, centro e dispersão dos grupos.
-
-# O QUE CONFERIR:
-#   - são seis tanques por grupo; o n válido pode variar conforme a resposta;
-#     sobrevivencia possui NA. Confira como resumir_grupo() calcula n;
-#   - compare a distância entre médias com a dispersão dentro dos grupos;
-#   - desvios parecidos entre grupos (senão, atenção ao teste de Levene).
-
-resumir_grupo(biometria, ganho_peso, densidade)
-resumir_grupo(biometria, sobrevivencia, densidade)
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- explora-ganho ----
-
-# Visualiza distribuição, dispersão e possíveis valores extremos, num boxplot
-# com os tanques individuais.
-
-# O QUE CONFERIR:
-#   - caixas de tamanho parecido (variâncias homogêneas);
-#   - nenhum ponto muito fora da sua caixa (possível erro de digitação);
-#   - a mediana sugere uma tendência? A ANOVA compara médias, não medianas.
-#     A aparência do boxplot, sozinha, não determina a significância.
-
-# O boxplot resume a forma da distribuição; os pontos preservam a visão de
-# quantos tanques existem e onde cada observação se encontra.
-
-ggplot(biometria, aes(x = densidade, y = ganho_peso)) +
-  geom_boxplot(width = 0.5, outlier.shape = NA, colour = "grey50") +
-  geom_jitter(width = 0.1, height = 0, size = 2, alpha = 0.7) +
-  labs(
-    x = "Densidade (peixes/m³)",
-    y = "Ganho de peso (g)",
-    title = "Exploratório: ganho de peso por densidade"
-  ) +
-  tema_projeto()
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- explora-peso-comprimento ----
-
-# Verifica a coerência biológica entre peso e comprimento.
-
-# O QUE CONFERIR:
-#   - os pontos formam uma nuvem crescente e apertada?
-#   - algum ponto isolado (peso alto com comprimento baixo, ou o contrário)?
-#     Se houver, volte à planilha e confira o tanque.
-
-# A relação serve como verificação de plausibilidade e ajuda a encontrar
-# possíveis erros de digitação.
-
-# O T14 não tem comprimento (ver a seção tratar-biometria). Preferimos tirá-lo de
-# propósito e dizer quantos ficaram de fora, em vez de deixar o ggplot
-# descartar em silêncio.
-
-com_comprimento <- filter(biometria, !is.na(comprimento))
-
-message(
-  nrow(biometria) - nrow(com_comprimento),
-  " tanque(s) sem comprimento ficaram fora deste gráfico."
+# 3.2 Conferir. O projeto traz uma fotografia da base preparada em
+# dados/processados/. catalyser_conferir_base() compara a receita com ela
+# e avisa se algo divergir; a análise segue com a fotografia em qualquer
+# caso.
+# O QUE CONFERIR: a mensagem deve dizer que as duas bases são idênticas.
+catalyser_conferir_base(
+  base_reconstruida,
+  here("dados", "processados", "base_compartilhada.rds"),
+  rotulo = "Base Compartilhada"
 )
 
-ggplot(com_comprimento, aes(x = comprimento, y = peso_final)) +
-  geom_point(size = 2, alpha = 0.7) +
-  geom_smooth(method = "lm", se = FALSE, colour = "grey40", linewidth = 0.6) +
-  labs(
-    x = "Comprimento final (cm)",
-    y = "Peso final (g)",
-    title = "Exploratório: peso × comprimento"
-  ) +
-  tema_projeto()
+# 3.3 Adotar. A análise parte da fotografia, que preserva os tipos das
+# colunas e impede que uma mudança silenciosa no preparo entre no Render.
+# Para adotar a sua receita, confira-a acima e grave-a na fotografia:
+# saveRDS(base_reconstruida, here("dados", "processados", "base_compartilhada.rds"))
+dados_analise <- readRDS(here("dados", "processados", "base_compartilhada.rds"))
 
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- explora-agua ----
+# 3.4 Base desta análise. Aqui ela é a própria Base Compartilhada; quando
+# a análise parte de um ramo, esta etapa recebe a receita do ramo.
+dados_da_analise <- dados_analise
+# Mantemos identificação e medidas JUNTAS. O modelo usará a resposta e o fator.
+# |> encaminha uma tabela para a próxima operação; mutate() cria/altera colunas.
+# linha_original conserva a posição na base preparada adotada pela análise.
+dados_preparados <- as.data.frame(dados_da_analise) |>
+  mutate(linha_original = row_number(), .before = 1)
 
-# Verifica se a qualidade da água foi semelhante entre os tratamentos.
+# if (...) verifica uma condição; quando ela é TRUE, executa o bloco.
+# Aqui, stop() interrompe a análise e mostra a mensagem do problema encontrado.
+if (!all(c(variavel_resposta, variavel_fator) %in% names(dados_preparados))) {
+  stop("Confira os nomes da resposta e do fator na base preparada.")
+}
+if (!is.numeric(dados_preparados[[variavel_resposta]])) {
+  stop("A resposta precisa ser numérica. Confira a tipagem no preparo.")
+}
+if (nivel_confianca <= 0 || nivel_confianca >= 1) stop("Confira o nível de confiança.")
 
-# O QUE CONFERIR:
-#   - as linhas dos quatro tratamentos andam juntas em cada painel?
-#   - alguma semana com queda brusca (falha de aeração, chuva)?
-#   - oxigênio abaixo de 3 mg/L em algum grupo é sinal de alerta.
+# A ANOVA utiliza só a resposta e o fator; faltantes em outras colunas
+# não excluem linhas. TRUE marca uma linha com as duas informações.
+linhas_completas <- !is.na(dados_preparados[[variavel_resposta]]) &
+  !is.na(dados_preparados[[variavel_fator]])
 
-# A tabela "agua" está no formato longo (uma linha por tanque × semana).
-# Juntamos a densidade de cada tanque e olhamos a média semanal por tratamento.
-
-agua_resumo <- agua |>
-  left_join(select(biometria, tanque, densidade), by = "tanque") |>
-  pivot_longer(
-    c(temperatura, oxigenio, ph),
-    names_to = "variavel",
-    values_to = "valor"
-  ) |>
-  group_by(densidade, semana, variavel) |>
-  summarise(media = mean(valor, na.rm = TRUE), .groups = "drop")
-
-ggplot(agua_resumo, aes(x = semana, y = media, colour = densidade)) +
-  geom_line(linewidth = 0.7) +
-  geom_point(size = 1.8) +
-  facet_wrap(~ variavel, scales = "free_y", ncol = 1) +
-  scale_colour_manual(values = cores_tratamento, name = "Densidade (peixes/m³)") +
-  scale_x_continuous(breaks = 1:8) +
-  labs(
-    x = "Semana",
-    y = NULL,
-    title = "Exploratório: qualidade de água"
-  ) +
-  tema_projeto()
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- analisar ----
-
-# ETAPA 1 — ajustar a ANOVA para testar se o ganho médio de peso difere entre
-# as densidades (densidade como fator, ganho_peso como resposta).
-
-# A ANOVA responde à pergunta global: existe pelo menos uma média diferente?
-# Ela ainda não informa quais densidades diferem entre si.
-
-modelo_ganho <- aov(ganho_peso ~ densidade, data = biometria)
-tabela_anova <- anova(modelo_ganho)
-tabela_anova
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- analisar-pressupostos ----
-
-# ETAPA 2 — verificar os pressupostos da ANOVA: normalidade dos resíduos e
-# homogeneidade das variâncias.
-
-# Em ambos os testes, p > 0,05 significa que não há evidência suficiente
-# para rejeitar o pressuposto avaliado. Os gráficos de diagnóstico completam
-# essa verificação na seção exclusiva do caderno HTML.
-# Não rejeitar um pressuposto não é comprovar que ele seja verdadeiro.
-
-# Shapiro usa resíduos; Levene compara a dispersão da resposta entre grupos.
-
-teste_normalidade <- shapiro.test(residuals(modelo_ganho))
-teste_levene <- leveneTest(ganho_peso ~ densidade, data = biometria)
-
-teste_normalidade
-teste_levene
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- analisar-tukey ----
-
-# ETAPA 3 — comparar as médias pelo teste de Tukey, para descobrir quais pares
-# de densidade diferem entre si.
-
-# Uma letra compartilhada indica que não se detectou diferença a 5 %;
-# isso não demonstra equivalência entre médias. Os p-valores são ajustados.
-
-# Aqui o Tukey é calculado direto. Ao reaproveitar este roteiro, confira antes
-# o resultado global da ANOVA e a adequação da análise.
-
-tukey_ganho <- TukeyHSD(modelo_ganho, "densidade")
-tukey_ganho
-
-letras <- multcompLetters(tukey_ganho$densidade[, "p adj"])$Letters
-
-resumo_ganho <- resumir_grupo(biometria, ganho_peso, densidade) |>
-  mutate(letra = letras[as.character(densidade)]) |>
-  arrange(densidade)
-
-resumo_ganho
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- analisar-tendencia ----
-
-# ETAPA 4 — resumir a tendência linear, estimando quanto o ganho muda quando a
-# densidade aumenta (densidade_num como variável quantitativa).
-
-# A ANOVA compara grupos; esta regressão resume a direção e a intensidade
-# média da relação em um único coeficiente.
-
-modelo_tendencia <- lm(ganho_peso ~ densidade_num, data = biometria)
-summary(modelo_tendencia)
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- preparar-resultados-texto ----
-
-# ETAPA 5 — extrair, uma única vez, os números citados no texto dos Resultados;
-# eles entram depois por expressões `r ...` no relatório.
-
-# fmt() e formatar_p(), definidas em R/funcoes.R, aplicam vírgula decimal,
-# número de casas e a escrita convencional dos valores de p.
-
-f_valor   <- fmt(tabela_anova$`F value`[1])
-gl_trat   <- tabela_anova$Df[1]
-gl_res    <- tabela_anova$Df[2]
-p_anova   <- formatar_p(tabela_anova$`Pr(>F)`[1], no_texto = TRUE)
-p_shapiro <- formatar_p(teste_normalidade$p.value, no_texto = TRUE)
-p_levene  <- formatar_p(teste_levene$`Pr(>F)`[1], no_texto = TRUE)
-coef_tend <- abs(coef(modelo_tendencia)[2])
-
-# coef_tend usa abs(): guarda a magnitude, não o sinal da inclinação.
-# A frase "caiu" no QMD é específica deste exemplo; se os dados mudarem,
-# confira o sinal de coef(modelo_tendencia)[2] e revise a interpretação.
-
-# Textos narrativos não se atualizam automaticamente como os números inline.
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- diagnostico-variancia ----
-
-# Avalia visualmente a constância da variância e a forma dos resíduos
-# (resíduos versus valores ajustados).
-
-# O QUE CONFERIR:
-#   - a nuvem de pontos tem a mesma altura em todos os grupos (colunas);
-#   - a linha vermelha fica perto de zero, sem curva;
-#   - um funil (dispersão crescendo com a média) é sinal de variância
-#     heterogênea: investigue sua origem e a adequação de alternativas,
-#     como ANOVA de Welch. Kruskal-Wallis não é uma correção automática.
-
-plot(modelo_ganho, which = 1)
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- diagnostico-normalidade ----
-
-# Avalia visualmente a normalidade dos resíduos (gráfico quantil-quantil).
-
-# O QUE CONFERIR:
-#   - os pontos seguem a linha pontilhada, com pequenos desvios nas pontas;
-#   - um "S" ou uma cauda que se descola é sinal de assimetria ou de
-#     valor extremo. Com n pequeno (aqui, 24), pequenos desvios são normais.
-
-plot(modelo_ganho, which = 2)
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- diagnostico-influencia ----
-
-# Identifica observações que podem influenciar a conclusão (resíduos
-# padronizados por nível do fator).
-
-# O QUE CONFERIR:
-#   - a maioria dos pontos entre -2 e 2;
-#   - um ponto além de 3 merece uma volta à planilha: erro de digitação ou
-#     um tanque que passou por algo diferente (ver a coluna observacoes).
-
-# Os números junto aos pontos correspondem às linhas da base e permitem
-# localizar cada observação suspeita.
-
-plot(modelo_ganho, which = 5)
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- tbl-resumo ----
-
-# Apresenta as estatísticas descritivas e os grupos do teste de Tukey, numa
-# tabela formatada para as saídas HTML e DOCX.
-
-resumo_ganho |>
+# Copiamos as duas variáveis para colunas de nomes curtos, grupo e resposta.
+# Nomes com espaço ou acento atrapalham TukeyHSD() e as letras dos grupos;
+# assim o código funciona com qualquer cabeçalho vindo do Excel.
+# droplevels() retira grupos que ficaram sem nenhuma observação.
+base_anova <- dados_preparados[linhas_completas, ] |>
   mutate(
-    `IC 95 %` = paste0(fmt(ic_inf, 1), " a ", fmt(ic_sup, 1)),
-    across(c(media, dp, ep), ~ fmt(.x, 1))
+    grupo = factor(.data[[variavel_fator]]),
+    resposta = .data[[variavel_resposta]]
   ) |>
-  select(
-    `Densidade (peixes/m³)` = densidade,
+  droplevels()
+
+n_total <- nrow(dados_preparados)
+n_utilizado <- nrow(base_anova)
+# ! inverte TRUE/FALSE; na soma, TRUE vale 1. Contamos as linhas que saíram.
+n_excluido <- sum(!linhas_completas)
+n_grupos <- nlevels(base_anova$grupo)
+if (n_grupos < 2) stop("A ANOVA precisa de pelo menos dois grupos com dados.")
+# As letras de Tukey usam o hífen para separar os pares; ele não pode
+# aparecer no nome de um grupo. Renomeie esses grupos no preparo.
+if (any(grepl("-", levels(base_anova$grupo), fixed = TRUE))) {
+  stop("Há hífen no nome de um grupo. Renomeie os grupos no preparo.")
+}
+# Se houver mais grupos que cores, criamos cores intermediárias.
+cores_grupos <- if (n_grupos <= length(cores_tratamento)) {
+  cores_tratamento[seq_len(n_grupos)]
+} else {
+  grDevices::colorRampPalette(cores_tratamento)(n_grupos)
+}
+
+# 4. Explorar os grupos -----------------------------------------------------
+# Compare tamanho, centro e dispersão da resposta entre os grupos.
+# group_by() separa a tabela em grupos; summarise() calcula uma linha por grupo.
+# O IC da média usa o t crítico com n - 1 graus de liberdade, como na CatalyseR.
+tabela_resumo <- base_anova |>
+  group_by(grupo) |>
+  summarise(
+    n = n(),
+    media = mean(resposta),
+    dp = sd(resposta),
+    ep = dp / sqrt(n),
+    t_critico = qt(1 - alfa / 2, df = n - 1),
+    ic_inf = media - t_critico * ep,
+    ic_sup = media + t_critico * ep,
+    .groups = "drop"
+  ) |>
+  select(-t_critico)
+# Execute tabela_resumo no console. Confira o n de cada grupo e se as
+# dispersões (dp) são parecidas: grupos muito diferentes pedem atenção.
+
+# 5. Ajustar a ANOVA e extrair os resultados --------------------------------
+# aov() ajusta o modelo resposta ~ grupo, como na CatalyseR. A ANOVA responde à
+# pergunta global: a média difere entre os grupos? Ainda não diz quais diferem.
+modelo_anova <- aov(resposta ~ grupo, data = base_anova)
+resumo_console <- summary(modelo_anova)
+# resumo_console é o que o R mostra no console: a saída bruta, uma vez. Os
+# relatórios não exibem essa saída; usam as tabelas formatadas construídas adiante.
+# tidy() transforma a tabela da ANOVA em um data.frame com nomes claros.
+tabela_anova <- broom::tidy(modelo_anova)
+gl_fator <- tabela_anova$df[1]
+gl_residuo <- tabela_anova$df[2]
+f_anova <- tabela_anova$statistic[1]
+p_anova <- tabela_anova$p.value[1]
+
+# 6. Examinar os pressupostos -----------------------------------------------
+# Os pressupostos dizem respeito aos erros; os resíduos ajudam a examiná-los.
+# p > alfa indica ausência de evidência contra o pressuposto; não o prova.
+dados_diagnostico <- data.frame(
+  linha_original = base_anova$linha_original,
+  grupo = base_anova$grupo,
+  ajustado = fitted(modelo_anova),
+  residuo = residuals(modelo_anova),
+  residuo_padronizado = rstandard(modelo_anova)
+)
+# shapiro.test() aceita de 3 a 5000 resíduos com alguma variação. Fora dessas
+# condições, registramos NA e a leitura fica com o gráfico Q-Q.
+teste_shapiro <- NULL
+if (n_utilizado >= 3 && n_utilizado <= 5000 && sd(dados_diagnostico$residuo) > 0) {
+  teste_shapiro <- shapiro.test(dados_diagnostico$residuo)
+}
+w_shapiro <- if (is.null(teste_shapiro)) NA_real_ else unname(teste_shapiro$statistic)
+p_shapiro <- if (is.null(teste_shapiro)) NA_real_ else teste_shapiro$p.value
+# Levene compara as variâncias entre os grupos (pacote car).
+teste_levene <- car::leveneTest(resposta ~ grupo, data = base_anova)
+f_levene <- teste_levene$`F value`[1]
+p_levene <- teste_levene$`Pr(>F)`[1]
+# Regra prática complementar: razão entre o maior e o menor DP dos grupos.
+# Ela dá escala à desigualdade — razão próxima de 1, grupos parecidos; razão
+# acima de 2, alerta. Não substitui o teste formal, apenas o acompanha.
+razao_dp <- max(tabela_resumo$dp) / min(tabela_resumo$dp)
+
+# 7. Comparar os grupos e medir o tamanho do efeito --------------------------
+# Tukey compara todos os pares, com p-valores ajustados para comparações múltiplas.
+tukey <- TukeyHSD(modelo_anova, conf.level = nivel_confianca)
+tabela_tukey <- as.data.frame(tukey$grupo)
+tabela_tukey$Comparação <- rownames(tabela_tukey)
+# multcompLetters4() resume o Tukey em letras: grupos que compartilham uma
+# letra não diferiram ao nível escolhido. $grupo$Letters extrai as letras.
+letras <- multcompView::multcompLetters4(modelo_anova, tukey)$grupo$Letters
+# Juntamos a letra pelo NOME do grupo, nunca pela posição da linha.
+tabela_resumo <- tabela_resumo |>
+  mutate(letra = unname(letras[as.character(grupo)]))
+# Eta² é a fração da variação da resposta associada ao fator;
+# ômega² corrige o viés do eta² em amostras pequenas. O intervalo de
+# confiança de cada medida acompanha a estimativa pontual.
+efeito_eta <- effectsize::eta_squared(modelo_anova, partial = FALSE,
+                                      ci = nivel_confianca)
+efeito_omega <- effectsize::omega_squared(modelo_anova, partial = FALSE,
+                                          ci = nivel_confianca)
+eta2 <- efeito_eta$Eta2[1]
+omega2 <- efeito_omega$Omega2[1]
+eta_ic <- c(efeito_eta$CI_low[1], efeito_eta$CI_high[1])
+omega_ic <- c(efeito_omega$CI_low[1], efeito_omega$CI_high[1])
+# case_when() escolhe, de cima para baixo, a primeira condição verdadeira.
+# A convenção de Cohen é uma referência estatística, não biológica.
+classe_efeito <- case_when(
+  is.na(eta2) ~ "indeterminado",
+  eta2 < 0.01 ~ "muito pequeno",
+  eta2 < 0.06 ~ "pequeno",
+  eta2 < 0.14 ~ "médio",
+  TRUE ~ "grande"
+)
+
+# 8. Preparar as tabelas de apresentação ------------------------------------
+# fmt() e formatar_p() mudam só a exibição; os objetos numéricos ficam intactos.
+tabela_resumo_exibir <- tabela_resumo |>
+  transmute(
+    Grupo = grupo,
     n,
-    `Média` = media,
-    DP = dp,
-    EP = ep,
-    `IC 95 %`,
+    Média = fmt(media),
+    DP = fmt(dp),
+    EP = fmt(ep),
+    IC = stringr::str_glue("{fmt(ic_inf)} a {fmt(ic_sup)}"),
     Tukey = letra
+  )
+names(tabela_resumo_exibir)[names(tabela_resumo_exibir) == "Grupo"] <- rotulo_fator
+names(tabela_resumo_exibir)[names(tabela_resumo_exibir) == "IC"] <- paste0("IC ", ic_percentual, "%")
+
+# GL = graus de liberdade; SQ = soma de quadrados; QM = quadrado médio.
+# A linha do resíduo não tem F nem p: as células ficam vazias.
+tabela_anova_exibir <- tabela_anova |>
+  transmute(
+    Fonte = c(rotulo_fator, "Resíduo"),
+    GL = df,
+    SQ = fmt(sumsq),
+    QM = fmt(meansq),
+    F = ifelse(is.na(statistic), "", fmt(statistic)),
+    p = ifelse(is.na(p.value), "", formatar_p(p.value))
+  )
+
+tabela_tukey_exibir <- tabela_tukey |>
+  transmute(
+    Comparação,
+    Diferença = fmt(diff),
+    IC = stringr::str_glue("{fmt(lwr)} a {fmt(upr)}"),
+    `p ajustado` = formatar_p(`p adj`)
+  )
+names(tabela_tukey_exibir)[names(tabela_tukey_exibir) == "IC"] <- paste0("IC ", ic_percentual, "%")
+
+tabela_testes <- data.frame(
+  Pressuposto = c(
+    "Normalidade dos resíduos",
+    "Homogeneidade das variâncias",
+    "Homogeneidade das variâncias (regra prática)"
+  ),
+  Teste = c("Shapiro-Wilk", "Levene", "Razão maior/menor DP"),
+  Estatística = c(
+    paste0("W = ", fmt(w_shapiro, 3)),
+    paste0("F(", teste_levene$Df[1], ", ", teste_levene$Df[2], ") = ", fmt(f_levene)),
+    paste0("Razão = ", fmt(razao_dp, 2))
+  ),
+  p = c(formatar_p(c(p_shapiro, p_levene)), "—"),
+  check.names = FALSE
+)
+
+tabela_efeito <- data.frame(
+  Medida = c("η²", "ω²"),
+  Valor = fmt(c(eta2, omega2), 3),
+  IC = stringr::str_glue("[{fmt(c(eta_ic[1], omega_ic[1]), 3)} a {fmt(c(eta_ic[2], omega_ic[2]), 3)}]"),
+  Leitura = c(classe_efeito, "correção do η² para amostras pequenas")
+)
+names(tabela_efeito)[names(tabela_efeito) == "IC"] <- paste0("IC ", ic_percentual, "%")
+
+# A ANOVA de Welch não supõe variâncias iguais. A tabela ao lado da clássica
+# é apenas informativa: a análise seguiu a clássica, como planejado, com o
+# Tukey. Comparar as duas mostra o quanto a conclusão dependeria da escolha
+# (Delacre et al., 2019). Sem Kruskal-Wallis nem pós-teste nesta comparação.
+teste_welch <- stats::oneway.test(resposta ~ grupo, data = base_anova,
+                                  var.equal = FALSE)
+f_welch <- unname(teste_welch$statistic)
+p_welch <- teste_welch$p.value
+gl1_welch <- teste_welch$parameter[["num df"]]
+gl2_welch <- teste_welch$parameter[["denom df"]]
+
+tabela_comparativa <- data.frame(
+  Aspecto = c(
+    "Suposição sobre as variâncias",
+    "Estatística F",
+    "Graus de liberdade",
+    "p-valor"
+  ),
+  `ANOVA clássica` = c(
+    "Variâncias iguais entre os grupos",
+    fmt(f_anova),
+    paste0(gl_fator, "; ", gl_residuo),
+    formatar_p(p_anova)
+  ),
+  `ANOVA de Welch` = c(
+    "Não exige variâncias iguais",
+    fmt(f_welch),
+    paste0(fmt(gl1_welch, 1), "; ", fmt(gl2_welch, 1)),
+    formatar_p(p_welch)
+  ),
+  check.names = FALSE
+)
+
+# 9. Construir os gráficos --------------------------------------------------
+# Cada gráfico recebe um nome: o QMD mostra o objeto e ggsave() salva uma cópia.
+
+# 9.1. Exploração: caixas com as observações por cima.
+# O QUE CONFERIR: caixas de alturas parecidas e pontos muito afastados.
+grafico_boxplot <- ggplot(
+  base_anova,
+  aes(x = grupo, y = resposta)
+) +
+  geom_boxplot(width = 0.5, outlier.shape = NA, colour = "grey50") +
+  geom_jitter(width = 0.1, height = 0, size = 1.5, alpha = 0.5) +
+  labs(x = rotulo_fator, y = rotulo_resposta) +
+  tema_projeto()
+
+# 9.2. Figura principal: pontos individuais com média, IC, rótulo média ± DP
+# e letras de Tukey. Cada ponto é uma observação; o losango é a média.
+# Tabela local só da figura: a letra fica acima do maior entre o limite do
+# IC e o ponto mais alto do grupo. tabela_resumo não muda — ela é gravada
+# em saida/tabelas/resumo_grupos.csv.
+tabela_figura <- tabela_resumo |>
+  left_join(
+    base_anova |>
+      group_by(grupo) |>
+      summarise(y_max = max(resposta), .groups = "drop"),
+    by = "grupo"
   ) |>
-  flextable_ocean()
+  mutate(y_letra = pmax(ic_sup, y_max))
 
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- tbl-anova ----
-
-# Converte a saída da ANOVA numa tabela de artigo científico (HTML e DOCX).
-
-tabela_anova |>
-  as.data.frame() |>
-  mutate(
-    Fonte = c("Densidade", "Resíduo"),
-    GL = Df,
-    SQ = fmt(`Sum Sq`, 1),
-    QM = fmt(`Mean Sq`, 1),
-    F = fmt(`F value`),
-    p = formatar_p(`Pr(>F)`)
-  ) |>
-  select(Fonte, GL, SQ, QM, F, p) |>
-  # A linha do resíduo não possui F nem p; por isso, deixamos as células vazias.
-  mutate(across(c(F, p), ~ ifelse(is.na(.x) | .x == "-", "", .x))) |>
-  flextable_ocean()
-
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- fig-ganho ----
-
-# Figura principal da comparação entre densidades, reunindo dados individuais,
-# médias, incerteza e o teste de Tukey.
-
-# LEITURA DAS CAMADAS DO GRÁFICO:
-#   1. geom_jitter()   -> cada ponto representa um tanque-rede;
-#   2. geom_errorbar() -> intervalo de confiança de 95 % da média;
-#   3. geom_point()    -> média de cada densidade;
-#   4. geom_text()     -> letras do teste de Tukey.
-
-ggplot() +
+grafico_barras <- ggplot(tabela_figura, aes(x = grupo)) +
   geom_jitter(
-    data = biometria,
-    aes(x = densidade, y = ganho_peso, colour = densidade),
-    width = 0.12,
-    height = 0,
-    size = 2,
-    alpha = 0.6
+    data = base_anova,
+    aes(y = resposta, colour = grupo),
+    width = 0.10,
+    size = 2.2,
+    alpha = 0.7
   ) +
   geom_errorbar(
-    data = resumo_ganho,
-    aes(x = densidade, ymin = ic_inf, ymax = ic_sup),
-    width = 0.2,
-    linewidth = 0.6
+    aes(ymin = ic_inf, ymax = ic_sup),
+    width = 0.15,
+    linewidth = 0.8,
+    colour = "#0F3B5F"
   ) +
-  geom_point(
-    data = resumo_ganho,
-    aes(x = densidade, y = media),
-    size = 3,
-    shape = 21,
-    fill = "white",
-    stroke = 1
-  ) +
+  geom_point(aes(y = media), shape = 18, size = 4.4, colour = "#0F3B5F") +
   geom_text(
-    data = resumo_ganho,
-    aes(x = densidade, y = ic_sup, label = letra),
-    vjust = -0.8,
+    aes(y = y_letra, label = letra),
+    vjust = -0.9,
+    fontface = "bold",
     size = 4
   ) +
-  scale_colour_manual(values = cores_tratamento, guide = "none") +
+  geom_text(
+    aes(y = media, label = paste0(fmt(media, 1), " ± ", fmt(dp, 1))),
+    nudge_x = 0.08,
+    hjust = 0,
+    vjust = -0.4,
+    size = 3.5
+  ) +
+  scale_x_discrete(expand = expansion(add = c(0.6, 0.9))) +
+  scale_colour_manual(values = cores_grupos, guide = "none") +
   scale_y_continuous(expand = expansion(mult = c(0.05, 0.12))) +
   labs(
-    x = "Densidade de estocagem (peixes/m³)",
-    y = "Ganho de peso em 8 semanas (g)"
+    x = rotulo_fator,
+    y = rotulo_resposta,
+    title = if (nzchar(titulo_grafico)) titulo_grafico else NULL
   ) +
   tema_projeto()
 
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- fig-tendencia ----
+# 9.3. Resíduos versus ajustados. Na ANOVA aparecem faixas verticais, uma por
+# grupo. Faixas de alturas muito diferentes sugerem variâncias desiguais.
+grafico_residuos <- ggplot(
+  dados_diagnostico,
+  aes(x = ajustado, y = residuo, colour = grupo)
+) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40") +
+  geom_jitter(width = 0.02, height = 0, alpha = 0.7) +
+  scale_colour_manual(values = cores_grupos) +
+  labs(x = "Valores ajustados (médias dos grupos)", y = "Resíduos", colour = rotulo_fator) +
+  tema_projeto()
 
-# Mostra a direção e a intensidade da tendência com a densidade: dispersão dos
-# tanques com reta e IC 95 % da regressão linear.
+# 9.4. Q-Q: os pontos devem acompanhar a reta; caudas que se descolam
+# indicam assimetria ou valores extremos.
+grafico_qq <- ggplot(
+  dados_diagnostico,
+  aes(sample = residuo_padronizado)
+) +
+  stat_qq(colour = "#2E7D8F", alpha = 0.7) +
+  stat_qq_line(colour = "#E76F51") +
+  labs(x = "Quantis teóricos", y = "Resíduos padronizados") +
+  tema_projeto()
 
-# geom_smooth() estima a reta a partir do mesmo modelo linear resumido em
-# analisar-tendencia; geom_point() mantém visíveis as observações originais.
+# 9.5. Diferenças entre pares (floresta). Cada linha é uma comparação do
+# Tukey: o ponto é a diferença estimada e a haste é o intervalo de confiança
+# ajustado. A reta tracejada marca a diferença zero: IC que a cruza não
+# indica diferença entre os grupos.
+tabela_pares_figura <- tabela_tukey |>
+  mutate(par = factor(Comparação, levels = rev(Comparação)))
 
-ggplot(biometria, aes(x = densidade_num, y = ganho_peso)) +
-  geom_smooth(method = "lm", colour = "grey30", fill = "grey85", linewidth = 0.7) +
-  geom_point(aes(colour = densidade), size = 2, alpha = 0.7) +
-  scale_colour_manual(values = cores_tratamento, guide = "none") +
-  scale_x_continuous(breaks = c(50, 100, 150, 200)) +
+grafico_pares <- ggplot(
+  tabela_pares_figura,
+  aes(x = diff, y = par)
+) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
+  geom_errorbar(
+    aes(xmin = lwr, xmax = upr),
+    width = 0.2,
+    linewidth = 0.8,
+    colour = "#2E7D8F",
+    orientation = "y"
+  ) +
+  geom_point(size = 3, colour = "#0F3B5F") +
   labs(
-    x = "Densidade de estocagem (peixes/m³)",
-    y = "Ganho de peso em 8 semanas (g)"
+    x = paste0("Diferença de médias de ", rotulo_resposta, ", IC ", ic_percentual, "% (Tukey)"),
+    y = NULL
   ) +
   tema_projeto()
 
-# ──────────────────────────────────────────────────────────────────────-------|
-## ---- fim-do-codigo ----
+# 10. Preparar os textos que serão usados nos relatórios --------------------
+# Os textos retomam os resultados depois de tabelas e gráficos.
+# A atribuição com <- guarda a frase no objeto; print() mostra seu conteúdo.
+# Execute a criação e a linha print() para calcular e conferir cada texto.
 
-# (nada além daqui entra no relatório)
+# 10.1 Evidência estatística da ANOVA
+evidencia <- case_when(
+  is.na(p_anova) ~ "a ANOVA não forneceu um p-valor válido",
+  p_anova < alfa ~ "houve evidência de diferença entre as médias dos grupos",
+  TRUE ~ "não houve evidência de diferença entre as médias dos grupos"
+)
+print(evidencia)
+
+# 10.2 Leitura dos pressupostos. NA significa teste não calculado, não atendido.
+leitura_shapiro <- case_when(
+  is.na(p_shapiro) ~ "O teste de normalidade não foi calculado; use o gráfico Q-Q.",
+  p_shapiro >= alfa ~ "Não houve evidência para rejeitar a normalidade dos resíduos.",
+  TRUE ~ "Houve evidência de afastamento da normalidade dos resíduos."
+)
+leitura_levene <- case_when(
+  is.na(p_levene) ~ "O teste de Levene não forneceu um p-valor válido.",
+  p_levene >= alfa ~ "Não houve evidência para rejeitar a igualdade das variâncias.",
+  TRUE ~ "Houve evidência de variâncias diferentes entre os grupos."
+)
+
+# 10.3 Textos que serão usados nos relatórios
+texto_amostra <- stringr::str_glue(
+  "Após o preparo, havia {n_total} observações. A análise utilizou ",
+  "{n_utilizado} casos completos em {n_grupos} grupos; {n_excluido} ",
+  "observações foram excluídas por ausência de resposta ou grupo."
+)
+print(texto_amostra)
+
+texto_anova <- stringr::str_glue(
+  "Em {rotulo_resposta}, {evidencia} de {rotulo_fator} ",
+  "(F({gl_fator}, {gl_residuo}) = {fmt(f_anova)}; ",
+  "{formatar_p(p_anova, no_texto = TRUE)})."
+)
+print(texto_anova)
+
+texto_efeito <- stringr::str_glue(
+  "O tamanho de efeito foi {classe_efeito} pela convenção de Cohen ",
+  "(η² = {fmt(eta2, 3)}; ω² = {fmt(omega2, 3)}), uma referência estatística, ",
+  "não biológica."
+)
+print(texto_efeito)
+
+texto_tukey <- if (!is.na(p_anova) && p_anova < alfa) {
+  "Pelo teste de Tukey, grupos que compartilham uma letra não diferiram entre si ao nível adotado."
+} else {
+  "Como a ANOVA não indicou diferença global, as comparações de Tukey servem apenas para descrição."
+}
+print(texto_tukey)
+
+# O artigo recebe frases curtas; o caderno recebe também a orientação de leitura.
+texto_pressupostos_artigo <- stringr::str_glue(
+  "{leitura_shapiro} Shapiro-Wilk: W = {fmt(w_shapiro, 3)}; ",
+  "{formatar_p(p_shapiro, no_texto = TRUE)}. {leitura_levene} ",
+  "Levene: F({teste_levene$Df[1]}, {teste_levene$Df[2]}) = {fmt(f_levene)}; ",
+  "{formatar_p(p_levene, no_texto = TRUE)}."
+)
+print(texto_pressupostos_artigo)
+
+texto_pressupostos <- paste(
+  texto_pressupostos_artigo,
+  "Esses resultados não comprovam os pressupostos; a avaliação deve incluir",
+  "os gráficos e o delineamento. A independência das observações depende",
+  "de como os dados foram obtidos."
+)
+print(texto_pressupostos)
+
+alerta_modelo <- if (!is.na(p_levene) && p_levene < alfa) {
+  "As variâncias diferiram entre os grupos. A @tbl-welch compara o resultado com a ANOVA de Welch antes de concluir."
+} else if (!is.na(p_shapiro) && p_shapiro < alfa) {
+  "Os resíduos se afastaram da normalidade. Avalie a intensidade do desvio nos gráficos e, se necessário, uma alternativa como Kruskal-Wallis."
+} else "Os testes formais não detectaram os desvios examinados, mas os gráficos e o delineamento continuam necessários."
+print(alerta_modelo)
+
+# Poder do teste: a probabilidade de detectar um efeito do tamanho observado.
+# pwr.anova.test() quer o efeito na escala f de Cohen: f = sqrt(η² / (1 − η²)),
+# e supõe grupos de mesmo tamanho — usamos o n médio por grupo.
+poder_anova <- if (eta2 > 0 && is.finite(eta2)) {
+  pwr::pwr.anova.test(
+    k = n_grupos,
+    n = mean(tabela_resumo$n),
+    f = sqrt(eta2 / (1 - eta2)),
+    sig.level = alfa
+  )$power
+} else {
+  NA_real_
+}
+# Ressalva apenas quando ela muda a leitura: ANOVA sem evidência E baixo
+# poder. Com p < alfa o efeito já foi detectado; o poder observado, aí,
+# não acrescenta informação.
+alerta_poder <- if (!is.na(p_anova) && p_anova >= alfa &&
+                    !is.na(poder_anova) && poder_anova < 0.80) {
+  stringr::str_glue(
+    "A ausência de evidência não deve ser lida como ausência de efeito: ",
+    "para o tamanho de efeito observado, o poder do teste foi de apenas ",
+    "{fmt(100 * poder_anova, 0)}%. Uma amostra maior seria necessária para ",
+    "concluir com mais segurança."
+  )
+} else {
+  ""
+}
+print(alerta_poder)
+
+# Síntese estatística: os argumentos científicos serão escritos no QMD.
+texto_sintese_estatistica <- stringr::str_glue(
+  "Na amostra de {n_utilizado} observações em {n_grupos} grupos, {evidencia} ",
+  "(F({gl_fator}, {gl_residuo}) = {fmt(f_anova)}; ",
+  "{formatar_p(p_anova, no_texto = TRUE)}; η² = {fmt(eta2, 3)}). ",
+  "A interpretação deve considerar os pressupostos e o delineamento."
+)
+print(texto_sintese_estatistica)
+
+# 11. Salvar cópias para consulta e compartilhamento ------------------------
+# CSV com ponto e vírgula e vírgula decimal abre bem no Excel em português.
+# Estes arquivos são saídas: edite a análise no script, não o CSV gerado.
+
+# Uma única base processada, com identificadores, resposta e grupo analisados.
+# Os QMDs não precisam dela: eles executam este script e usam base_anova.
+write.csv2(
+  base_anova,
+  here::here("dados", "processados", "base_anova.csv"),
+  row.names = FALSE,
+  fileEncoding = "UTF-8"
+)
+
+# A lista associa o nome do arquivo ao objeto já calculado.
+# O laço repete somente a gravação, sem repetir nenhuma análise.
+tabelas <- list(
+  resumo_grupos = tabela_resumo,
+  anova = tabela_anova,
+  tukey = tabela_tukey,
+  testes_pressupostos = tabela_testes,
+  tamanho_efeito = tabela_efeito,
+  diagnosticos_observacoes = dados_diagnostico
+)
+for (nome in names(tabelas)) {
+  caminho_csv <- here::here("saida", "tabelas", paste0(nome, ".csv"))
+  write.csv2(
+    tabelas[[nome]],
+    caminho_csv,
+    row.names = FALSE,
+    fileEncoding = "UTF-8"
+  )
+}
+
+# ggsave() salva os mesmos gráficos que os QMDs mostram a partir da memória.
+figuras <- list(
+  barras = grafico_barras,
+  boxplot = grafico_boxplot,
+  pares = grafico_pares,
+  residuos = grafico_residuos,
+  qq = grafico_qq
+)
+for (nome in names(figuras)) {
+  caminho_png <- here::here("saida", "figuras", paste0(nome, ".png"))
+  ggsave(
+    caminho_png,
+    plot = figuras[[nome]],
+    width = 7,
+    height = 4.6,
+    dpi = 300,
+    bg = "white"
+  )
+}
+
+# 12. Registrar o ambiente computacional -----------------------------------
+# sessionInfo() informa o R e os pacotes; a versão do Quarto é consultada à parte.
+# Este registro documenta o ambiente. Não instala nem fixa versões por si só.
+versao_quarto <- if (nzchar(Sys.which("quarto"))) {
+  system2("quarto", "--version", stdout = TRUE)
+} else "Quarto não encontrado no PATH desta sessão."
+registro_ambiente <- c(
+  paste("Quarto:", versao_quarto),
+  capture.output(sessionInfo())
+)
+writeLines(
+  registro_ambiente,
+  here::here("saida", "sessionInfo.txt"),
+  useBytes = TRUE
+)

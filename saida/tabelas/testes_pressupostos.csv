@@ -1,0 +1,4 @@
+"Pressuposto";"Teste";"Estatística";"p"
+"Normalidade dos resíduos";"Shapiro-Wilk";"W = 0,934";"0,203"
+"Homogeneidade das variâncias";"Levene";"F(3, 15) = 0,02";"0,997"
+"Homogeneidade das variâncias (regra prática)";"Razão maior/menor DP";"Razão = 1,18";"—"

@@ -1,0 +1,7 @@
+Esta pasta guarda fotos e esquemas do pesquisador (foto do local de
+coleta, esquema do delineamento, mapa). Ela não é usada pelo código:
+os arquivos entram nos relatórios com markdown, por exemplo:
+
+    ![](imagens/minha_foto.jpg)
+
+Nenhum arquivo daqui é alterado pela análise.

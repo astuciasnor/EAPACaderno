@@ -1,417 +1,145 @@
-# EAPACaderno
+# peso_g entre grupos de racao
 
-## Dois exemplos para aprender progressivamente
+Este Projeto R foi gerado pela CatalyseR para estudar e comunicar uma ANOVA de um fator.
+Abra **isoproteica_bagre.Rproj** no RStudio. O projeto funciona com a base local,
+pacotes do CRAN e dois pacotes do ecossistema instalados do GitHub.
 
-- [Descritiva do barbo](descritiva-barbo/README.md): primeiro contato com a
-  organização de um Projeto R, usando uma variável, uma tabela e um histograma.
-  Script curto e dois QMDs com textos enxutos.
-- [Regressão do barbo](morfometria-barbo/README.md): referência mais completa
-  de roteiro didático, com modelo, diagnósticos e interpretação.
+## Um convite a aprender programação
 
-Esses exemplos usam um script analítico e dois documentos separados (HTML e
-Word) e orientam a evolução dos Projetos R exportados pela CatalyseR. A migração
-do gerador ainda está pendente. O projeto de ANOVA na raiz mantém seu fluxo
-próprio de sincronização, descrito a seguir.
+O arquivo `R/analise.R` mostra como a base preparada se transforma em ANOVA,
+comparações de Tukey, pressupostos, tabelas, gráficos e textos estatísticos.
+Os comentários explicam as decisões e as operações menos familiares. Execute as seções em ordem e
+examine os objetos indicados no começo do script. É o caminho do mouse ao código:
+quem começa pela CatalyseR encontra aqui a chance de entender o que a ferramenta
+faz e de modificar a análise com autonomia.
 
-## Projeto original da raiz
+## O que você encontra
 
-O caderno de análise do ecossistema EAPA: o projeto-modelo de análise de dados
-em R, feito para ser copiado no começo de cada análise nova. A ideia é simples:
-uma planilha entra, um documento faz tudo, um relatório em Word sai. Nada de
-framework; só pastas com nomes claros, o pacote `here`, um documento Quarto
-e um pouco de disciplina.
-
-## Análise e relatório
-
-O script `R/analise.R` é o código do relatório (`relatorios/relatorio.qmd`)
-com as explicações que o relatório não mostra. Aqui se aprende; lá se apresenta.
-O `R/funcoes.R` define as funções auxiliares.
-O `relatorios/relatorio.qmd` reúne o texto científico e o código que gera
-os resultados, produzindo o Word e o HTML.
-
-O código é editado em `R/analise.R`. Depois, `atualizar_codigo()` copia os
-trechos para o relatório; `conferir_codigo()` verifica a sincronização no
-Render. Esse é o fluxo adotado pelo projeto.
-
-Texto e código no mesmo documento, na ordem em que a análise é pensada:
-esse jeito de programar chama-se ***Programação Literária***. Aqui, essa
-combinação acontece em `relatorios/relatorio.qmd`.
-
-## A estrutura
-
-```
-EAPACaderno/
-│
-├── EAPACaderno.Rproj   abra o projeto por aqui (define a raiz para o here)
-├── README.md                      este arquivo: o que é o projeto e como rodar
-│
+```text
+isoproteica_bagre.Rproj
+├── _quarto.yml
 ├── dados/
-│   ├── brutos/                    a planilha original. SOMENTE LEITURA: nunca editar à mão
-│   └── processados/               a base tratada em .csv, gerada pelo relatório, para o Excel
-│
+│   ├── brutos/                    entrada preservada
+│   └── processados/               bases adotadas e base da ANOVA
 ├── R/
-│   ├── analise.R                  código comentado: é aqui que se edita a análise
-│   └── funcoes.R                  só DEFINIÇÕES de funções próprias (não roda nada)
-│
-├── imagens/                       fotos, esquemas e mapas que NÃO vêm do código (começa vazia)
-│
-└── relatorios/
-    ├── relatorio.qmd              O RELATÓRIO: o texto e o código (copiado de analise.R)
-    ├── custom-reference.docx      modelo de página do Word (fonte, margens, sumário)
-    ├── ocean.scss                 cores e fontes do caderno HTML (identidade Ocean do EAPA)
-    ├── referencias.bib            as obras citadas no texto
-    ├── abnt.csl                   estilo ABNT das citações e da lista de referências (padrão)
-    ├── apa.csl                    estilo APA, alternativo (troque a linha csl: no YAML)
-    ├── relatorio.docx             o relatório para o leitor (gerado)
-    └── relatorio.html             o caderno do pesquisador, com o código (gerado)
+│   ├── analise.R                  fonte da verdade da análise
+│   └── funcoes.R                  apresentação de números, tabelas e figuras
+├── imagens/                       fotos e esquemas fornecidos pelo pesquisador
+├── relatorios/
+│   ├── relatorio_completo.qmd     caderno HTML
+│   ├── relatorio_artigo.qmd       documento Word
+│   ├── referencias.bib
+│   ├── apa.csl
+│   ├── custom-reference.docx
+│   └── ocean.scss
+└── saida/
+    ├── tabelas/
+    ├── figuras/
+    ├── relatorios/
+    └── sessionInfo.txt
 ```
 
-A separação que importa é entre **o que entra** (`dados/brutos/`, `imagens/`),
-**o que a gente escreve** (`R/analise.R`, `relatorios/relatorio.qmd`,
-`R/funcoes.R`) e **o que
-o código gera** (`dados/processados/`, o `relatorio.docx`). Tudo da terceira
-categoria pode ser apagado e refeito com um Render. Uma foto em `imagens/`
-entra no relatório com `![legenda](../imagens/foto.jpg){#fig-foto}`, e o
-Quarto a numera junto com as figuras feitas em código.
+O R calcula; os QMDs executam esse script e apresentam os objetos prontos.
+Você não precisa copiar código entre arquivos nem sincronizar chunks.
+O Render de cada documento recalcula a análise e recria as saídas. O projeto
+cria automaticamente as pastas necessárias. Não depende de objetos no console.
 
-## A ideia: um documento que conta e faz
+Os QMDs **não leem** as tabelas CSV ou figuras PNG de `saida/`. Eles usam os
+objetos que o script acabou de criar na memória. Se você executar o script no
+RStudio, verá os objetos no Environment; se clicar em Render, o Quarto usa uma
+sessão própria. Não é preciso povoar o Environment manualmente antes do Render.
 
-O `relatorio.qmd` é o projeto inteiro. Ele segue a ordem natural de uma
-análise, e cada etapa é um chunk com nome que diz o que faz:
+| No script R | No relatório | Cópia salva para compartilhar |
+|---|---|---|
+| `tabela_resumo` contém os números; `tabela_resumo_exibir` formata | `flextable_ocean(tabela_resumo_exibir)` | `saida/tabelas/resumo_grupos.csv` |
+| `tabela_anova` e `tabela_tukey` guardam os testes; as versões `_exibir` formatam | `flextable_ocean(tabela_anova_exibir)` e `flextable_ocean(tabela_tukey_exibir)` | `saida/tabelas/anova.csv` e `tukey.csv` |
+| `grafico_barras` guarda a figura | `grafico_barras` | `saida/figuras/barras.png` |
+| `texto_anova`, `texto_tukey` e `texto_efeito` reúnem números em frases | Expressão R inline no parágrafo | As frases entram no HTML e no Word |
 
-| Etapa      | Chunk                 | Trechos de `R/analise.R` que ele reúne                  | No Word? | No HTML? |
-|------------|-----------------------|--------------------------------------------------------|----------|----------|
-| manter     | `codigo-do-script`, `atualizar` | conferem (no Render) e copiam (à mão) o código do script | não | não |
-| instalar   | `instalar`            | instala pacotes que faltam; roda uma vez (`eval: false`) | não | não |
-| pacotes    | `pacotes`             | `library()`, `source(funcoes.R)` e opções gerais        | não | não |
-| importar   | `importar-e-conferir` | `importar`, `conferir-importacao`: lê a planilha como veio e mostra os tipos | não | código |
-| tratar     | `preparo`             | `tratar`, `tratar-biometria`, `tratar-agua`, `conferir-dados`, `exportar-dados`: nomes, tipos, variáveis derivadas, conferência e `.csv` | não | código |
-| explorar   | `explora-*` (4)       | um trecho por exploração: resumos e gráficos para olhar antes de testar | não | código e gráficos |
-| analisar   | `analise`             | `analisar`, `analisar-pressupostos`, `analisar-tukey`, `analisar-tendencia`, `preparar-resultados-texto` | não | código |
-| diagnosticar | `diagnostico-*` (3) | um trecho por pressuposto do modelo, com seu gráfico   | não | código e gráficos |
-| comunicar  | `tbl-*`, `fig-*` e o texto | tabelas, figuras numeradas e a narrativa            | **sim** | **sim** |
+## Preparar o computador, uma vez
 
-Cada trecho do script abre com um cabeçalho que diz o **objetivo**, a
-**entrada**, o que ele **produz**, de que trecho **depende** e, nos de
-exploração e diagnóstico, **o que conferir** no resultado. Assim dá para
-entender uma etapa sem ler o arquivo inteiro. Quando várias etapas se seguem
-sem texto entre elas (importar e conferir; as cinco de preparo; as cinco de
-análise), o relatório as reúne num chunk só, para o código não ficar picado.
-
-Isso é *literate programming*: o código e o texto vivem no mesmo lugar, na
-ordem em que a análise é pensada. O mesmo arquivo gera **dois documentos**:
-
-- **`relatorio.docx`, para o leitor.** Estrutura de artigo científico
-  (Resumo, Introdução, Material e métodos, Resultados, Discussão, Conclusão,
-  Referências), só com texto, tabelas e figuras. As seções de exploração e o
-  diagnóstico dos resíduos são removidos (`content-visible when-format="html"`).
-- **`relatorio.html`, o caderno do pesquisador.** Tudo o que está no Word, mais
-  o código de cada chunk, dobrado (clique em "Código" para abrir, ou use o menu
-  no canto superior para mostrar tudo), e as seções de exploração com seus
-  gráficos.
-
-E, fora dos dois, o pesquisador vê qualquer passo rodando o chunk no RStudio
-(Ctrl+Shift+Enter), com a saída no console como sempre.
-
-## Por que um arquivo, duas saídas?
-
-Um aluno logo pergunta: por que existe um `.qmd` só, e como um arquivo gera um
-Word e um HTML diferentes? A resposta cabe numa imagem: **é a mesma receita,
-servida de dois jeitos.** O Word é o prato pronto na mesa, para quem vai comer
-(o leitor: resultados e método, no formato de um artigo). O HTML é a cozinha
-aberta, para quem quer ver como se fez (o pesquisador: todo o código, a
-exploração, o diagnóstico). A receita é uma só; muda quem está olhando.
-
-O script é a fonte do código; o `.qmd` reúne esse código e o texto, e é dele
-que saem as duas impressões. O Word e o HTML não são dois arquivos que você
-mantém à mão; são gerados no Render e descartáveis. Se você editasse um
-`.docx` e um `.html` separados, eles logo divergiriam, e ninguém saberia qual
-é o certo. Com um `.qmd` só, essa dúvida não existe.
-
-E o Quarto sabe para qual formato está gerando: durante o Render ele carrega um
-formato de cada vez e o documento se adapta sozinho, por três mecanismos que já
-estão no arquivo:
-
-- **`echo`** — global vale `false` (o Word não mostra código), mas o bloco
-  `html` reescreve para `echo: true`. O mesmo chunk aparece dobrado no HTML e
-  some no Word.
-- **`content-visible when-format="html"`** — as seções de Exploração e de
-  Diagnóstico existem só no HTML; no Word o Quarto as remove antes de gerar.
-- **`output: false` / `include: false`** — valem para os dois formatos, porque
-  são trabalho de bastidor em qualquer caso. Os chunks de exploração e de
-  diagnóstico não levam nenhuma das duas: mostram tudo, mas só existem no
-  HTML, pela cerca do item anterior.
-
-Rodar chunk a chunk, aliás, não depende de formato nenhum: é o modo interativo
-do RStudio, e vale para o `.qmd` inteiro, esteja ele mirando Word ou HTML.
-
-## Onde o código mora: o script e o relatório
-
-O código aparece em dois lugares, mas só se **escreve** em um. Em
-`R/analise.R` ele vem com os comentários que explicam cada passo: por que
-`skip = 3`, por que o tanque 19 está sem sobrevivência, o que conferir em
-cada gráfico. No `relatorio.qmd` ele vem limpo, só as linhas que fazem
-alguma coisa, para que o caderno HTML mostre o que se fez sem a aula no meio,
-e para que qualquer chunk possa ser rodado linha a linha no RStudio.
-
-A ligação entre os dois é a primeira linha de cada chunk:
+Instale R, RStudio e Quarto. No console do R, instale os pacotes do CRAN:
 
 ```r
-# fonte: tratar, tratar-biometria, tratar-agua, conferir-dados, exportar-dados
+install.packages(
+c("broom", "car", "dplyr", "effectsize", "flextable", "ggplot2",
+  "here", "lubridate", "multcompView", "pwr", "readxl", "remotes",
+  "stringr")
+)
 ```
 
-Ela diz de quais trechos do script (os marcados com `## ---- nome ----`) o
-chunk é feito. A regra que sustenta tudo: **o código se edita no script,
-nunca no relatório.** Depois de editar, rode o chunk `atualizar`, logo no
-começo do `.qmd`: ele copia o código novo para os chunks, sem as linhas de
-comentário (um comentário no fim de uma linha de código, como em
-`library(readxl)  # planilhas`, fica), e diz quais mudaram. Se alguém
-esquecer, o Render para na primeira linha com a mensagem "o código do
-relatório está diferente de analise.R em: ..." e o nome do chunk. Assim os
-dois nunca divergem em silêncio. Um chunk R escrito direto no `.qmd`, sem a
-linha `# fonte:`, fica fora dessa conferência; o Render avisa no log quais
-são, para que isso seja uma escolha e não um esquecimento.
+Depois, os dois pacotes do ecossistema, que não estão no CRAN e são
+instalados do GitHub:
 
-Quem prefere estudar no script, estuda no script (o menu de seções do
-RStudio, Ctrl+Shift+O, lista os trechos). Quem prefere o caderno, lê o
-caderno e abre o script na seção de mesmo nome quando quer saber o porquê.
-
-## A aparência das duas saídas
-
-Cada saída tem o seu arquivo de estilo, e o `.qmd` não sabe de nenhum dos dois:
-
-- **Word:** `custom-reference.docx`, o mesmo modelo de página da CatalyseR,
-  com cara de artigo (Times New Roman 12, A4, margens ABNT, títulos numerados,
-  sem sumário). Para mudar fonte, margem ou estilo de título, edite os estilos
-  desse arquivo no Word, salve, e o próximo Render usa o novo.
-- **HTML:** `ocean.scss`, um arquivo pequeno com as cores e as fontes do
-  ecossistema (azul-marinho nos títulos, azul-petróleo nos links, Cambria e
-  Calibri). Para mudar uma cor, mude uma variável no topo dele.
-
-O YAML do `.qmd` só aponta para os dois (`reference-doc` e `theme`) e define
-o que é de cada formato: no Word, tamanho e resolução das figuras; no HTML, a
-faixa de título, o índice à esquerda (no alto, ao lado do Resumo), o código
-dobrado e os botões de copiar.
-As legendas saem como "Tabela 1 – ..." e "Figura 1 – ..." nos dois, no padrão
-da ABNT (`crossref: title-delim`).
-
-## Mudar o texto, inserir imagens
-
-O `.qmd` é seu para escrever. O texto entre os chunks é a prosa do relatório:
-mude a Introdução, a Discussão, o que quiser, do mesmo jeito que escreveria num
-editor. O que estiver em `` `r ... ` `` puxa um número do código (por exemplo
-`` `r fmt(coef_tend, 3)` ``) e se atualiza sozinho no próximo Render; o resto é
-texto comum.
-
-Para inserir uma foto ou um esquema que não vem do código (uma imagem do
-experimento, um mapa da área de coleta), guarde o arquivo em `imagens/` e
-chame-o assim, onde quiser que ele apareça:
-
-```
-![Vista dos tanques-rede no início do experimento.](../imagens/tanques.jpg){#fig-tanques}
+```r
+remotes::install_github("astuciasnor/catalyser")
+remotes::install_github("astuciasnor/EAPADados")
 ```
 
-O `#fig-tanques` dá um rótulo à figura; no texto, `@fig-tanques` vira "Figura N"
-com o número certo, lado a lado com as figuras feitas em código. O `../` sobe de
-`relatorios/` para a raiz e desce em `imagens/`. Uma foto assim aparece nas duas
-saídas, no Word e no HTML.
+Nenhum pacote é instalado automaticamente durante a análise. Se um dos dois
+pacotes do GitHub faltar, o script para na seção 1 e mostra o comando de
+instalação.
 
-## Mostrar algo só no caderno (ou só no Word)
+## Gerar os documentos
 
-As seções de Exploração e de Diagnóstico existem apenas no HTML. Quem faz isso
-é uma **cerca de dois-pontos** em volta do trecho, com a condição nas chaves:
+1. Abra o `.Rproj` e reinicie o R para começar com uma sessão limpa.
+2. Abra `relatorios/relatorio_completo.qmd` e clique em **Render** para o HTML.
+3. Abra `relatorios/relatorio_artigo.qmd` e clique em **Render** para o Word.
 
-```
-::: {.content-visible when-format="html"}
+Também é possível gerar os dois documentos, na raiz do projeto, com:
 
-## Exploração
-
-O que estiver aqui dentro (texto, chunks, figuras) só aparece no caderno.
-
-:::
+```sh
+quarto render
 ```
 
-A cerca de fechamento é uma linha só com `:::`. Para o contrário, use
-`.content-hidden when-format="docx"`: o trecho vale para todos os formatos,
-menos o Word.
+O Render **executa** o `R/analise.R` antes de montar cada documento. Não use
+modos que pulam essa execução (como `quarto render --no-execute`): os
+relatórios leem objetos calculados pelo script e, sem a execução, param com
+`object '<nome>' not found` na primeira expressão.
 
-Uma regra a lembrar quando houver caixa dentro de caixa (por exemplo, um
-*callout* dentro da seção): **a cerca de fora precisa de mais dois-pontos que a
-de dentro**. Por isso, no `relatorio.qmd`, a seção usa `::::` e o callout,
-`:::`. É assim que o Pandoc sabe qual fechamento pertence a qual abertura.
+Os caminhos usam `here::i_am()` e `here::here()` para reconhecer este projeto,
+inclusive quando ele está dentro de outro projeto R. Abra o `.Rproj` antes de
+executar; se mover o arquivo para outra subpasta, atualize a declaração
+`here::i_am("R/analise.R")` no começo do script.
 
-No editor visual do RStudio, o caminho é **Insert → Div**; a caixa aparece com
-as etiquetas `.content-visible` e `when-format="html"` no canto, e clicar nelas
-abre a edição. No editor de código, é só escrever as cercas.
+## Dados e preparo
 
-## As citações
+A entrada preservada é `dados/brutos/isoproteica_bagre.xlsx`. A CatalyseR exportou
+a receita de preparo e a fotografia da base adotada. O script reconstrói o
+percurso e confere essa fotografia antes da análise. Alterar a receita não
+substitui silenciosamente a base adotada.
 
-As citações usam `[@chave]` no texto e as obras ficam em `referencias.bib`;
-o Quarto monta a lista de referências no fim, no estilo do arquivo `.csl`
-indicado no YAML. Vêm dois estilos prontos: ABNT (o padrão) e APA (`apa.csl`,
-basta trocar a linha `csl:`). Qualquer outro se baixa do repositório de
-estilos CSL (github.com/citation-style-language/styles).
+A análise usa:
 
-No caderno HTML, as seções de Exploração e de Diagnóstico do modelo têm um
-chunk por verificação, e o trecho correspondente em `R/analise.R` diz o que
-conferir e o que seria sinal de problema. É a lista de pressupostos da
-análise, no lugar onde ela se confere.
+- resposta: **Peso (g)**;
+- fator (grupos comparados): **Tipo de Ração**;
+- intervalo de confiança: **95%**.
 
-## Como rodar
+## Como escrever e adaptar
 
-1. Abra o arquivo `.Rproj` no RStudio (ou abra a pasta no VS Code/Positron).
-   Isso define o diretório de trabalho na raiz do projeto, que é o que o
-   `here()` usa para montar os caminhos.
-2. Abra `relatorios/relatorio.qmd`. Em computador novo, rode o chunk
-   `instalar` uma vez (Ctrl+Shift+Enter com o cursor nele): ele instala só o
-   que falta. Faça isso antes do primeiro Render, porque o relatório usa o
-   pacote `here` logo na primeira linha.
-3. Reinicie o R (Ctrl+Shift+F10) e clique em **Render**. Saem
-   `relatorios/relatorio.docx` e `relatorios/relatorio.html` (a seta ao lado
-   do botão Render escolhe um formato só; no Terminal,
-   `quarto render relatorios/relatorio.qmd` gera os dois).
+Os dois QMDs trazem sugestões em Introdução, Material e métodos, Resultados,
+Discussão e Conclusão. O HTML documenta o percurso completo, com a exploração e
+os diagnósticos; o Word seleciona os resultados esperados em um artigo. Edite
+os cálculos no script e a argumentação nos QMDs.
 
-Se o Render passa com a memória limpa, a análise é reprodutível.
+Depois das tabelas e dos gráficos, a seção 10 do script reúne os resultados em
+frases e as mostra no console com `print()`. Os relatórios usam esses objetos,
+mas a discussão e a conclusão científica precisam ser revistas pelo pesquisador.
 
-## Rodar chunk a chunk, sem tropeçar nas cercas
+## Reprodutibilidade
 
-Durante o trabalho você não renderiza a cada mudança: roda um chunk e olha o
-console. Três jeitos, do mais seguro para o mais arriscado:
+Os dados de entrada permanecem em `dados/brutos/`. Produtos regeneráveis ficam
+em `dados/processados/` e `saida/`. O arquivo `saida/sessionInfo.txt`
+registra as versões do R, dos pacotes e do Quarto usadas na execução.
 
-- **O chunk inteiro:** clique no triângulo verde no canto do chunk, ou ponha o
-  cursor dentro dele e tecle **Ctrl+Shift+Enter**.
-- **Uma linha:** cursor na linha, **Ctrl+Enter**. Com o cursor dentro do chunk,
-  o RStudio manda só o código.
-- **Selecionar com o mouse e teclar Ctrl+Enter:** é aqui que se erra. Se a
-  seleção pegar as linhas de crases (` ``` `) que abrem e fecham o chunk, elas
-  vão para o console e o R responde:
+O estilo bibliográfico fornecido é APA. Para outra revista, coloque o arquivo
+CSL correspondente em `relatorios/` e altere o caminho em `_quarto.yml`.
 
-  ```
-  Erro: tentativa de usar um nome de variável com comprimento zero
-  ```
+## Origem dos dados
 
-  Não é erro do seu código: o R leu ` ``` ` como um nome entre crases vazio. O
-  código da seleção rodou normalmente. Selecione só as linhas de código, ou
-  use um dos dois primeiros jeitos.
-
-Uma ordem que ajuda: rode `pacotes`, depois `importar-e-conferir` e
-`preparo` (ou, com o cursor num chunk mais abaixo, **Ctrl+Alt+P** roda todos
-os anteriores). A partir daí, qualquer chunk de análise encontra os dados na
-memória. O mesmo vale no script: os trechos rodam em ordem, com Ctrl+Enter.
-
-## Relação com a CatalyseR
-
-Este projeto é o caminho a pé. O que a CatalyseR faz com cliques (importar,
-tratar, analisar, comunicar), aqui se faz à mão, um chunk por etapa. A chegada
-é a mesma: um relatório em Word com o mesmo modelo de página
-(`custom-reference.docx`), as mesmas cores (Ocean) e o mesmo jeito de escrever
-número e tabela (`fmt()`, `formatar_p()`, `flextable_ocean()`). O Projeto R
-que a CatalyseR exporta também é um `relatorio.qmd` com a análise dentro.
-Quem sai de um deve reconhecer o outro. Este projeto não depende da CatalyseR
-nem de nenhum pacote fora do CRAN.
-
-## Como usar em um projeto novo
-
-1. Pegue uma cópia limpa. No GitHub, use **Code → Download ZIP**: o `.zip` já
-   vem só com as pastas e os arquivos, sem o histórico do projeto. Se preferir
-   copiar a pasta de um computador para outro, apague de dentro da cópia as
-   pastas ocultas `.git/` (o histórico deste projeto, que não é o seu) e
-   `.Rproj.user/` (as preferências do RStudio de outra pessoa).
-2. Renomeie a pasta e o `.Rproj` com o nome do seu estudo. O `here()` não
-   depende desses nomes; ele acha a raiz pelo `.Rproj`, qualquer que seja ele.
-3. Coloque a(s) planilha(s) em `dados/brutos/`.
-4. Adapte o código em `R/analise.R`, trecho a trecho, na ordem. Em geral
-   `importar` e `tratar` mudam bastante, `explora-*` um pouco, e `analisar` é
-   onde a análise de fato acontece. O trecho `tratar` é onde você anota o que
-   é cada coluna (o `rename()` faz o "de-para" com a planilha) e por que cada
-   valor faltante está faltando. Trechos novos ganham um marcador
-   `## ---- nome ----` e entram na linha `# fonte:` do chunk que os mostra.
-5. Rode o chunk `atualizar` do `relatorio.qmd` e reescreva o texto. Os
-   números do texto vêm dos objetos (`` `r fmt(...)` ``), nunca digitados à
-   mão.
-6. Apague os arquivos de exemplo (`crescimento_tilapia.xlsx` e o conteúdo de
-   `dados/processados/`).
-
-O `.gitignore` que vem na pasta pode ficar: ele serve a qualquer projeto novo,
-dizendo ao git o que não versionar (as saídas do Render, os arquivos do
-RStudio, os dados gerados). Só passa a fazer efeito se você criar um
-repositório para o seu estudo, o que é uma boa ideia, mas não é obrigatório.
-
-## Convenções
-
-**Caminhos.** Sempre `here("pasta", "arquivo")`. Nunca `setwd()`, nunca
-`"C:/Users/fulano/..."`. O `here()` acha a raiz do projeto pelo `.Rproj`, então
-o mesmo código roda em qualquer computador e em qualquer pasta.
-
-**O script explica, o relatório faz, as funções definem.** O `R/analise.R`
-é onde o código se escreve e se comenta. O `relatorio.qmd` executa, de cima
-para baixo, o mesmo código sem os comentários (chunk `atualizar`). O
-`R/funcoes.R` contém só `nome <- function(...) {...}` e é carregado uma vez,
-no chunk `pacotes`. Se um trecho foi copiado e colado duas vezes, ele vira
-função.
-
-**Um chunk, uma etapa.** Cada chunk usa o que o anterior deixou na memória.
-Os nomes seguem a ordem da análise, e um sufixo separa as etapas de uma mesma
-fase: `tratar-biometria`, `analisar-tukey`. Quando o projeto tem mais de uma
-análise, o nome dela entra logo depois do verbo: `analisar-sobrevivencia`,
-`analisar-sobrevivencia-tukey`.
-
-**Cada etapa escreve num objeto que ela não lê.** O `tratar` produz
-`biometria_nomes`; o `tratar-biometria` lê esse objeto e produz `biometria`.
-Parece detalhe, mas é o que permite reexecutar um chunk isolado sem estragar
-nada. Se uma etapa sobrescrevesse a própria entrada, rodá-la duas vezes
-trataria um dado já tratado: `as.numeric()` sobre um fator já criado, por
-exemplo, devolveria 1, 2, 3, 4 no lugar das densidades, e ninguém veria o erro.
-
-**O que o leitor vê e o que o pesquisador vê.** Chunks de trabalho (importar,
-preparo, análise) rodam com `output: false`; os de exploração e diagnóstico
-mostram tudo, mas ficam dentro da cerca `when-format="html"`. Nada disso
-entra no Word, mas tudo roda e tudo pode ser executado no RStudio. Só
-`tbl-*`, `fig-*` e o texto aparecem nos dois.
-
-**Dados brutos são intocáveis.** Erro na planilha se corrige com código no
-chunk `tratar`, com comentário dizendo o porquê. Assim fica registrado.
-
-**Figuras nascem no relatório.** Um chunk `fig-*` com `fig-cap` é numerado,
-legendado e citado (`@fig-ganho`) pelo próprio Quarto. Não é preciso salvar
-PNG. Se precisar da figura fora do relatório (um slide, um artigo), um
-`ggsave()` no fim do chunk resolve.
-
-**Nomes.** Minúsculas, sem acento, sem espaço, `_` em objetos e arquivos
-(`ganho_peso`, `biometria.csv`), `-` em nomes de chunk (`fig-ganho`), e
-dizendo o que a coisa é: `fig-ganho-por-densidade`, não `grafico1`.
-
-**Pacotes no topo.** O chunk `pacotes` carrega tudo com `library()`. Dentro
-de `funcoes.R` usa-se `pacote::funcao()`.
-
-**Uma cara só.** Todas as figuras usam `tema_projeto()` e `cores_tratamento`;
-todas as tabelas do Word, `flextable_ocean()`; todo número no texto passa por
-`fmt()` ou `formatar_p()`. Muda-se num lugar, muda em tudo.
-
-**Comentários dizem o porquê, e moram no script.** O código já diz o quê.
-`# converte para numérico` não ajuda; `# alguém digitou "168,3" com vírgula e
-a coluna virou texto` ajuda. Eles ficam em `R/analise.R`; o relatório recebe
-só o código, e a única linha de comentário de cada chunk é a `# fonte:`.
-
-**Não salve o workspace.** Nas opções do RStudio (Tools → Global Options →
-General), desmarque *Restore .RData* e ponha *Save workspace* em *Never*. O
-`.Rproj` deste modelo já vem assim. Tudo que importa deve nascer do Render.
-
-## Sobre o exemplo
-
-Os dados são fictícios: um experimento de densidade de estocagem de tilápia em
-tanques-rede (4 densidades × 6 tanques, DIC). A planilha bruta traz de
-propósito os defeitos comuns de planilha de campo (título acima do cabeçalho,
-nome de coluna com unidade, valor digitado com vírgula, `-` no lugar de vazio),
-para que o chunk `tratar` mostre como se lida com cada um.
-
-## Referências que inspiraram esta estrutura
-
-- Knuth D. (1984). *Literate programming.* The Computer Journal 27(2): 97–111.
-- Wilson G. et al. (2017). *Good enough practices in scientific computing.*
-  PLOS Comput Biol 13(6): e1005510.
-- Wickham H., Çetinkaya-Rundel M., Grolemund G. *R para Ciência de Dados*, 2ª ed.,
-  caps. "Fluxo de trabalho: scripts e projetos" e "Quarto" (pt.r4ds.hadley.nz).
-- Bryan J. *What They Forgot to Teach You About R*, cap. "Project-oriented
-  workflow" (rstats.wtf).
-- Manual de R para Epidemiologistas, cap. "R projects" (epirhandbook.com/pt).
+Registre aqui a origem da planilha, a licença e o período de coleta — a
+CatalyseR não conhece a proveniência dos seus dados e não a declara no lugar
+do pesquisador. A base preparada foi adotada a partir da importação e dos
+tratamentos registrados na CatalyseR. A planilha original fica em
+`dados/brutos/isoproteica_bagre.xlsx` e não é alterada. O registro
+`saida/sessionInfo.txt` identifica o ambiente da execução.

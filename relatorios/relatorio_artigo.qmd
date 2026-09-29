@@ -1,0 +1,127 @@
+---
+title: "peso_g entre grupos de racao"
+subtitle: "Modelo de relatório científico · ANOVA de um fator"
+author: "Nome do autor — instituição (preencher)"
+date: today
+date-format: long
+bibliography: referencias.bib
+csl: apa.csl
+format:
+  docx:
+    reference-doc: custom-reference.docx
+    toc: false
+    number-sections: true
+    fig-width: 6
+    fig-height: 4
+    fig-dpi: 300
+---
+
+```{r}
+#| label: executar-analise
+#| include: false
+here::i_am("relatorios/relatorio_artigo.qmd")
+source(here::here("R", "analise.R"), encoding = "UTF-8")
+```
+
+```{=html}
+<!-- GUIA DE EDIÇÃO: altere cálculos em R/analise.R e a argumentação aqui.
+Os resultados numéricos vêm dos objetos do script. Revise os textos antes de
+usar este documento como artigo, monografia ou relatório científico. -->
+```
+
+# Introdução
+
+*Sugestão de redação: adapte a pergunta e acrescente referências do seu tema antes de compartilhar o relatório.*
+
+Na pesca e na aquicultura, comparar grupos é uma das perguntas mais frequentes: rações, densidades, espécies, locais ou épocas. A análise de variância de um fator avalia se a média de uma resposta numérica difere entre os grupos definidos por um fator.
+
+Neste estudo, comparou-se Peso (g) entre os grupos de Tipo de Ração. O objetivo foi verificar se as médias diferem, identificar quais grupos se separam e estimar a magnitude dessa diferença.
+
+# Material e métodos
+
+*Sugestão de redação: complete a origem dos dados, o período, o local, a unidade experimental, as unidades de medida e os critérios de seleção. Não declare independência sem conferir o delineamento.*
+
+A comparação de Peso (g) entre os grupos de Tipo de Ração usou análise de variância de um fator, seguida do teste de Tukey, com as funções de base do R [@rcore2025]. Foram utilizados os casos com resposta e grupo preenchidos. Os intervalos de confiança das médias e das comparações foram de 95%, e adotou-se nível de significância de 0,05 [@zar2010].
+
+A homogeneidade das variâncias foi avaliada pelo teste de Levene, do pacote `car` [@fox2019], e a normalidade dos resíduos pelo teste de Shapiro-Wilk, ambos acompanhados dos gráficos de resíduos. As letras de contraste do teste de Tukey foram obtidas com o pacote `multcompView` [@graves2026], e as figuras foram construídas com o `ggplot2` [@wickham2016]. O tamanho do efeito foi descrito por η² e ω².
+
+# Resultados
+
+`r texto_amostra`
+
+A @tbl-resumo descreve cada grupo com as letras do teste de Tukey.
+
+```{r}
+#| label: tbl-resumo
+#| tbl-cap: "Resumo por grupo: n, média, desvio padrão (DP), erro padrão (EP), intervalo de confiança da média e letras do teste de Tukey."
+flextable_ocean(tabela_resumo_exibir)
+```
+
+`r texto_anova` `r texto_efeito`
+
+A @tbl-anova resume a decomposição da variabilidade que sustenta o teste F.
+
+```{r}
+#| label: tbl-anova
+#| tbl-cap: "Análise de variância de um fator. GL: graus de liberdade; SQ: soma de quadrados; QM: quadrado médio."
+flextable_ocean(tabela_anova_exibir)
+```
+
+`r texto_tukey`
+
+A @fig-pares mostra cada diferença entre pares com seu intervalo de
+confiança; a @fig-barras apresenta as médias dos grupos com seus intervalos
+e as letras do teste de Tukey.
+
+```{r}
+#| label: fig-pares
+#| fig-cap: "Diferenças entre pares com IC 95% ajustado por Tukey. IC que cruza o zero: sem diferença."
+grafico_pares
+```
+
+```{r}
+#| label: fig-barras
+#| fig-cap: "Média de cada grupo com intervalo de confiança; o rótulo mostra média ± desvio padrão e as letras indicam os grupos do teste de Tukey."
+grafico_barras
+```
+
+`r texto_pressupostos_artigo`
+
+A @tbl-welch compara a ANOVA clássica, usada na análise, com a ANOVA de
+Welch, que não supõe variâncias iguais. É uma comparação apenas informativa:
+mostra o quanto a conclusão dependeria dessa escolha [@delacre2019]. A
+@fig-barras, no mesmo espírito de transparência, mostra cada observação como
+ponto, em vez de resumir os grupos em barras [@weissgerber2015]. Os testes
+formais de pressupostos, por sua vez, complementam — sem substituir — a
+inspeção visual dos resíduos [@kozak2018].
+
+```{r}
+#| label: tbl-welch
+#| tbl-cap: "ANOVA clássica e ANOVA de Welch lado a lado. A análise usa a clássica; a comparação é apenas informativa."
+flextable_ocean(tabela_comparativa)
+```
+
+# Discussão
+
+*Sugestão para desenvolver a discussão: comente quais grupos se separam, o tamanho das diferenças e a leitura à luz do fenômeno investigado. Compare com estudos do mesmo organismo e inclua as referências consultadas.*
+
+O p-valor expressa a compatibilidade dos dados com a hipótese nula; o tamanho de efeito descreve a magnitude da associação. A importância prática depende do contexto do estudo. O teste descreve diferenças entre os grupos; a atribuição de causa depende do delineamento e de como os dados foram obtidos.
+
+`r alerta_modelo`
+
+`r alerta_poder`
+
+# Conclusão
+
+`r texto_sintese_estatistica`
+
+*Sugestão de redação: responda ao objetivo em poucas frases, considerando a magnitude das diferenças, a incerteza e os limites do delineamento. Não acrescente resultados que não tenham sido apresentados.*
+
+# Disponibilidade dos dados e do código
+
+O projeto reúne os dados de entrada, a base preparada adotada, o script
+comentado `R/analise.R` e dois documentos Quarto. O caderno HTML apresenta o
+percurso completo; este documento seleciona os resultados principais. Ambos
+executam a mesma análise.
+
+# Referências

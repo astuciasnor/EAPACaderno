@@ -3,6 +3,61 @@
 % no estilo do arquivo .csl indicado no YAML. Para acrescentar uma obra, cole
 % a entrada BibTeX que a revista, o Google Scholar ou o Zotero fornecem.
 
+@book{tukey1977,
+  author = {Tukey, John W.},
+  title = {Exploratory Data Analysis},
+  publisher = {Addison-Wesley},
+  address = {Reading, MA},
+  year = {1977}
+}
+
+@article{velleman1993,
+  author = {Velleman, Paul F. and Wilkinson, Leland},
+  title = {Nominal, Ordinal, Interval, and Ratio Typologies Are Misleading},
+  journal = {The American Statistician},
+  volume = {47},
+  number = {1},
+  pages = {65--72},
+  year = {1993},
+  doi = {10.1080/00031305.1993.10475938}
+}
+
+@techreport{gaise2016,
+  author = {{GAISE College Report ASA Revision Committee}},
+  title = {Guidelines for Assessment and Instruction in Statistics Education ({GAISE}) College Report 2016},
+  institution = {American Statistical Association},
+  year = {2016},
+  url = {https://www.amstat.org/asa/files/pdfs/GAISE/GaiseCollege_Full.pdf}
+}
+
+@article{zuur2010,
+  author = {Zuur, Alain F. and Ieno, Elena N. and Elphick, Chris S.},
+  title = {A protocol for data exploration to avoid common statistical problems},
+  journal = {Methods in Ecology and Evolution},
+  year = {2010},
+  volume = {1},
+  number = {1},
+  pages = {3--14},
+  doi = {10.1111/j.2041-210X.2009.00001.x}
+}
+
+@manual{nistdiagnosticos,
+  author = {{National Institute of Standards and Technology}},
+  title = {Regression Diagnostics},
+  organization = {NIST},
+  url = {https://www.itl.nist.gov/div898/software/dataplot/refman1/auxillar/regrdiag.htm},
+  urldate = {2026-09-15}
+}
+
+@misc{takacs2022,
+  author = {Takács, Péter},
+  title = {Effects of the analysed variable set composition on the results of distance based morphometric surveys},
+  publisher = {Mendeley Data},
+  year = {2022},
+  note = {Version 1. Dados originais; recorte didático distribuído no EAPADados},
+  doi = {10.17632/c8856zg4hj.1}
+}
+
 @article{elsayed2002,
   author  = {El-Sayed, Abdel-Fattah M.},
   title   = {Effects of stocking density and feeding levels on growth and feed efficiency of Nile tilapia ({Oreochromis niloticus} L.) fry},
@@ -30,4 +85,82 @@
   address      = {Vienna, Austria},
   year         = {2025},
   url          = {https://www.R-project.org/}
+}
+
+@book{fox2019,
+  author    = {Fox, John and Weisberg, Sanford},
+  title     = {An {R} Companion to Applied Regression},
+  edition   = {3},
+  publisher = {Sage},
+  address   = {Thousand Oaks, CA},
+  year      = {2019}
+}
+
+@book{wickham2016,
+  author    = {Wickham, Hadley},
+  title     = {ggplot2: Elegant Graphics for Data Analysis},
+  publisher = {Springer-Verlag},
+  address   = {New York},
+  year      = {2016}
+}
+
+@manual{graves2026,
+  author       = {Graves, Spencer and Piepho, Hans-Peter and Selzer, Luciano},
+  title        = {multcompView: Visualizations of Paired Comparisons},
+  organization = {Comprehensive R Archive Network (CRAN)},
+  address      = {Vienna, Austria},
+  year         = {2026},
+  note         = {R package version 0.1-11},
+  url          = {https://CRAN.R-project.org/package=multcompView},
+  doi          = {10.32614/CRAN.package.multcompView}
+}
+
+% ---- Entradas da PCA (copiadas de Curadoria_Literatura_R/Multivariada_02_PCA/referencias_pca.bib) ----
+@article{camargo2022,
+  author = {Camargo, Arley},
+  title = {{PCAtest}: testing the statistical significance of Principal Component Analysis in {R}},
+  journal = {PeerJ}, volume = {10}, pages = {e12967}, year = {2022}, doi = {10.7717/peerj.12967}}
+@article{josse2016,
+  author = {Josse, Julie and Husson, François},
+  title = {{missMDA}: a package for handling missing values in multivariate data analysis},
+  journal = {Journal of Statistical Software}, volume = {70}, number = {1}, pages = {1--31}, year = {2016},
+  doi = {10.18637/jss.v070.i01}}
+@article{settanni2026,
+  author = {Settanni, Ettore and Srai, Jagjit Singh},
+  title = {It's a long way to the top (if you wanna biplot): a back-to-basics perspective on the implementation of principal component biplots in {R}},
+  journal = {Quality \& Quantity}, volume = {60}, number = {1}, pages = {1173--1213}, year = {2026},
+  doi = {10.1007/s11135-025-02266-9}}
+
+% ---- Entradas da ANOVA de um fator ----
+@article{weissgerber2015,
+  author  = {Weissgerber, Tracey L. and Milic, Natasa M. and Winham, Stacey J. and Garovic, Vesna D.},
+  title   = {Beyond bar and line graphs: time for a new data presentation paradigm},
+  journal = {PLoS Biology},
+  year    = {2015},
+  volume  = {13},
+  number  = {4},
+  pages   = {e1002128},
+  doi     = {10.1371/journal.pbio.1002128}
+}
+
+@article{kozak2018,
+  author  = {Kozak, Marcin and Piepho, Hans-Peter},
+  title   = {What's normal anyway? Residual plots are more telling than significance tests when checking {ANOVA} assumptions},
+  journal = {Journal of Agronomy and Crop Science},
+  year    = {2018},
+  volume  = {204},
+  number  = {1},
+  pages   = {86--98},
+  doi     = {10.1111/jac.12220}
+}
+
+@article{delacre2019,
+  author  = {Delacre, Marie and Leys, Christophe and Mora, Youri L. and Lakens, Daniël},
+  title   = {Taking parametric assumptions seriously: arguments for the use of {Welch}'s F-test instead of the classical F-test in one-way {ANOVA}},
+  journal = {International Review of Social Psychology},
+  year    = {2019},
+  volume  = {32},
+  number  = {1},
+  pages   = {13},
+  doi     = {10.5334/irsp.198}
 }

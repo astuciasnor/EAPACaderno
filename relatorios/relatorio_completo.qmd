@@ -1,0 +1,273 @@
+---
+title: "peso_g entre grupos de racao"
+subtitle: "Caderno completo · da base preparada à comparação dos grupos"
+author: "EAPA — Estatística Aplicada à Pesca e Aquicultura com R"
+date: today
+bibliography: referencias.bib
+csl: apa.csl
+format:
+  html:
+    theme: [cosmo, ocean.scss]
+    title-block-banner: "#0F3B5F"
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    code-fold: true
+    code-summary: "Ver código de apresentação"
+    code-tools: true
+    embed-resources: true
+    fig-width: 7
+    fig-height: 4.6
+    fig-dpi: 150
+execute:
+  echo: true
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| label: executar-analise
+#| include: false
+here::i_am("relatorios/relatorio_completo.qmd")
+source(here::here("R", "analise.R"), encoding = "UTF-8")
+```
+
+# Como usar este caderno
+
+Este documento acompanha o percurso completo da ANOVA. Os cálculos vivem
+em `R/analise.R`; os chunks abaixo apenas apresentam os objetos
+produzidos por ele. As tabelas CSV e as figuras PNG em `saida/` são
+cópias para consulta e não alimentam o relatório. Cada Render começa em
+uma sessão nova.
+
+**Os textos são sugestões para estudo e adaptação.** Os números se
+atualizam com o script, mas a interpretação depende da pergunta, das
+unidades e do delineamento da pesquisa.
+
+# Introdução: qual comparação queremos investigar?
+
+*Sugestão de redação: adapte a pergunta e acrescente referências do seu
+tema antes de compartilhar o relatório.*
+
+Na pesca e na aquicultura, comparar grupos é uma das perguntas mais
+frequentes: rações, densidades, espécies, locais ou épocas. A análise de
+variância de um fator avalia se a média de uma resposta numérica difere
+entre os grupos definidos por um fator.
+
+Neste estudo, comparou-se Peso (g) entre os grupos de Tipo de Ração. O
+objetivo foi verificar se as médias diferem, identificar quais grupos se
+separam e estimar a magnitude dessa diferença.
+
+# Material e métodos: o que entrou na comparação?
+
+*Sugestão de redação: complete a origem dos dados, o período, o local, a
+unidade experimental, as unidades de medida e os critérios de seleção.
+Não declare independência sem conferir o delineamento.*
+
+A comparação de Peso (g) entre os grupos de Tipo de Ração usou análise
+de variância de um fator, seguida do teste de Tukey, com as funções de
+base do R [@rcore2025]. Foram utilizados os casos com resposta e grupo
+preenchidos. Os intervalos de confiança das médias e das comparações
+foram de 95%, e adotou-se nível de significância de 0,05 [@zar2010].
+
+A homogeneidade das variâncias foi avaliada pelo teste de Levene, do
+pacote `car` [@fox2019], e a normalidade dos resíduos pelo teste de
+Shapiro-Wilk, ambos acompanhados dos gráficos de resíduos. As letras de
+contraste do teste de Tukey foram obtidas com o pacote `multcompView`
+[@graves2026], e as figuras foram construídas com o `ggplot2`
+[@wickham2016]. O tamanho do efeito foi descrito por η² e ω².
+
+## Dados e preparo
+
+A entrada preservada está em `dados/brutos/isoproteica_bagre.xlsx`. A
+CatalyseR registrou o preparo no início de `R/analise.R` e guardou a
+base adotada em `dados/processados/base_compartilhada.rds`. O script
+reconstrói o percurso, confere a base e usa a fotografia adotada para
+impedir mudanças silenciosas no Render.
+
+`r texto_amostra`
+
+## Modelo
+
+Ajustou-se uma análise de variância de um fator, seguida do teste de
+Tukey, com intervalos de confiança de `r ic_percentual`%. Os
+pressupostos foram examinados pelos testes de Shapiro-Wilk e de Levene e
+pelos gráficos de resíduos.
+
+# Exploração: conhecer os grupos antes do teste
+
+Os números da ANOVA só merecem leitura depois dos pressupostos:
+variâncias parecidas e resíduos aproximadamente normais são o que dá
+sentido ao teste F. Por isso esta seção explora os grupos e termina com
+o diagnóstico dos resíduos, antes de apresentar os resultados.
+
+A @tbl-resumo-exploracao reúne os números de cada grupo e a @fig-boxplot
+mostra a distribuição das observações, antes de qualquer teste.
+
+```{r}
+#| label: tbl-resumo-exploracao
+#| tbl-cap: "Resumo por grupo antes do teste: tamanho, centro e dispersão."
+flextable_ocean(tabela_resumo_exibir[, 1:5])
+```
+
+```{r}
+#| label: fig-boxplot
+#| fig-cap: "Distribuição da resposta em cada grupo, com as observações sobrepostas."
+grafico_boxplot
+```
+
+## Diagnósticos: até onde podemos confiar no teste F?
+
+### Independência e delineamento
+
+A independência não é comprovada por um gráfico ou teste. Confira a
+unidade experimental, medidas repetidas, tanques, locais e outras formas
+de agrupamento antes de interpretar a ANOVA.
+
+### Homogeneidade e normalidade
+
+A ANOVA supõe variâncias parecidas entre os grupos e resíduos
+aproximadamente normais. A @fig-residuos compara os resíduos com os
+valores ajustados: faixas de alturas muito diferentes sugerem variâncias
+desiguais. A @fig-qq compara os resíduos padronizados com os quantis da
+normal; pontos que se afastam da reta indicam assimetria ou valores
+extremos. A @tbl-testes reúne os testes formais e a regra prática da
+razão de desvios-padrão que complementam essa inspeção.
+
+```{r}
+#| label: fig-residuos
+#| fig-cap: "Resíduos versus valores ajustados; faixas de alturas muito diferentes sugerem variâncias desiguais."
+#| out-width: "75%"
+#| fig-align: center
+grafico_residuos
+```
+
+```{r}
+#| label: fig-qq
+#| fig-cap: "Gráfico Q-Q dos resíduos padronizados do modelo."
+#| out-width: "75%"
+#| fig-align: center
+grafico_qq
+```
+
+```{r}
+#| label: tbl-testes
+#| tbl-cap: "Testes de pressupostos e regra prática da razão de desvios-padrão, complementares à inspeção gráfica e ao delineamento."
+flextable_ocean(tabela_testes)
+```
+
+`r texto_pressupostos`
+
+A @tbl-welch compara a ANOVA clássica, usada na análise, com a ANOVA de
+Welch, que não supõe variâncias iguais. É uma comparação apenas
+informativa: mostra o quanto a conclusão dependeria dessa escolha
+[@delacre2019]. A @fig-barras, no mesmo espírito de transparência,
+mostra cada observação como ponto, em vez de resumir os grupos em barras
+[@weissgerber2015]. Os testes formais de pressupostos, por sua vez,
+complementam — sem substituir — a inspeção visual dos resíduos
+[@kozak2018].
+
+```{r}
+#| label: tbl-welch
+#| tbl-cap: "ANOVA clássica e ANOVA de Welch lado a lado. A análise usa a clássica; a comparação é apenas informativa."
+flextable_ocean(tabela_comparativa)
+```
+
+# Resultados: o que a ANOVA responde?
+
+A @tbl-anova resume a decomposição da variabilidade que sustenta o teste
+F.
+
+`r texto_anova`
+
+```{r}
+#| label: tbl-anova
+#| tbl-cap: "Análise de variância de um fator. GL: graus de liberdade; SQ: soma de quadrados; QM: quadrado médio."
+flextable_ocean(tabela_anova_exibir)
+```
+
+A @tbl-efeito traz o tamanho do efeito medido pela análise.
+
+`r texto_efeito`
+
+```{r}
+#| label: tbl-efeito
+#| tbl-cap: "Tamanho do efeito do fator."
+flextable_ocean(tabela_efeito)
+```
+
+## Comparações entre os grupos
+
+As comparações dois a dois estão na @tbl-tukey e o resumo com as letras
+na @tbl-resumo; a @fig-pares mostra cada diferença com seu intervalo de
+confiança e a @fig-barras apresenta as médias com seus intervalos.
+
+`r texto_tukey`
+
+```{r}
+#| label: tbl-tukey
+#| tbl-cap: "Comparações entre pares pelo teste de Tukey, com intervalos de confiança e p-valores ajustados."
+flextable_ocean(tabela_tukey_exibir)
+```
+
+```{r}
+#| label: fig-pares
+#| fig-cap: "Diferenças entre pares com IC 95% ajustado por Tukey. IC que cruza o zero: sem diferença."
+grafico_pares
+```
+
+```{r}
+#| label: tbl-resumo
+#| tbl-cap: "Resumo por grupo com as letras do teste de Tukey."
+flextable_ocean(tabela_resumo_exibir)
+```
+
+```{r}
+#| label: fig-barras
+#| fig-cap: "Média de cada grupo com intervalo de confiança; o rótulo mostra média ± desvio padrão e as letras indicam os grupos do teste de Tukey."
+grafico_barras
+```
+
+# Discussão: voltar à pergunta biológica
+
+*Sugestão para desenvolver a discussão: comente quais grupos se separam,
+o tamanho das diferenças e a leitura à luz do fenômeno investigado.
+Compare com estudos do mesmo organismo e inclua as referências
+consultadas.*
+
+O p-valor expressa a compatibilidade dos dados com a hipótese nula; o
+tamanho de efeito descreve a magnitude da associação. A importância
+prática depende do contexto do estudo. O teste descreve diferenças entre
+os grupos; a atribuição de causa depende do delineamento e de como os
+dados foram obtidos.
+
+`r alerta_modelo`
+
+`r alerta_poder`
+
+# Conclusão
+
+`r texto_sintese_estatistica`
+
+*Sugestão de redação: responda ao objetivo em poucas frases,
+considerando a magnitude das diferenças, a incerteza e os limites do
+delineamento. Não acrescente resultados que não tenham sido
+apresentados.*
+
+# Reproduzir e adaptar
+
+Abra o arquivo `.Rproj`, reinicie o R e renderize este documento. Para
+alterar os cálculos, edite `R/analise.R`. Para amadurecer a argumentação
+científica, edite os QMDs. Preserve os dados de entrada e registre
+qualquer mudança feita na base preparada.
+
+## Ambiente computacional
+
+```{r}
+#| label: ambiente
+#| echo: false
+cat(registro_ambiente, sep = "\n")
+```
+
+# Referências
